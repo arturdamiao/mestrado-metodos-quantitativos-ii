@@ -1,0 +1,101 @@
+---
+title: "Aula 03"
+
+date: 2025/08/28
+date-format: "long"
+
+author:
+  - name: Artur Damião
+    orcid: 0000-0002-8628-1653
+    email: arturcardoso@usp.br
+    affiliation: 
+      - name: Programa de Pós-Graduação em Sociologia
+
+format: pdf
+#  html: 
+#    embed-resources: true
+
+lang: pt
+
+number-sections: true
+
+toc: true
+toc-depth: 3
+
+---
+
+# Importação
+
+Importanto e manipulando os dados. Usando o "argumento" `warning: false` dentro do Chunk, para ocultar os avisos.
+
+```{r}
+#| warning: false
+
+pacman::p_load(
+  tidyverse,
+  poliscidata
+)
+
+banco_1 <- poliscidata::gss
+
+banco_finalizado <- banco_1 |>
+  dplyr::select(age, born, degree, sex, authoritarianism) |>
+  dplyr::filter(
+    born == "YES",
+    sex == "Female"
+  ) |>
+  dplyr::mutate(
+    ano_nascimento = 2012 - age
+  ) |>
+  dplyr::rename(
+    yearh_birth = ano_nascimento
+  ) |>
+  dplyr::mutate(
+    age = dplyr::case_when(
+      age < 20 ~ "Menos de 20",
+      age >= 20 & age < 30 ~ "De 20 a 29",
+      age >= 30 ~ "30+"
+    )
+  )
+```
+
+
+# Visualização
+
+Visualizando um gráfico de barras, usando o "argumento" `echo: false` para não mostrar o código e somente o resultado. 
+
+```{r}
+#| echo: false
+#| fig-cap: "Voto presidencial em 2012, com NAs"
+#| cap-location: top
+#| fig-width: 5
+#| fig-height: 5
+
+banco <- poliscidata::nes
+
+ggplot(banco, aes(pres_vote12)) +
+  geom_bar()
+```
+
+
+# Título 1
+
+## Subtítulo 2
+
+### Seção 1 
+
+- Item 1
+- Item 2
+- Item 3
+
+Lista ordenada: 
+
+1. 1
+1. 2
+1. 3
+1. 4
+
+### Básico do `markdown`
+
+- Para usar *itálico*, a palavra tem que estar em volta de `*asteriscos*`.
+- Para usa **negrito**, usa-se dois `**asteriscos**`.

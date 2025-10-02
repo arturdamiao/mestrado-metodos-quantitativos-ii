@@ -1,0 +1,355 @@
+---
+title: "Lista 01 - Artur Damião"
+
+date: today
+date-format: "long"
+
+author:
+  - name: Artur Damião
+
+thanks: "Número USP: 10701251. E-mail: arturcardoso@usp.br"
+
+format: 
+  pdf:
+    colorlinks: true
+    fontsize: "12"
+    papersize: a4
+    geometry:
+      - top=30mm
+      - bottom=20mm
+      - left=30mm
+      - right=20mm
+      - heightrounded
+
+lang: pt
+number-sections: true
+
+toc: true
+toc-depth: 3
+---
+
+# Ambientação {.unnumbered .unlisted}
+
+Instando e carregando os pacotes necessários:
+
+```{r}
+#| label: ambientacao
+#| message: false
+
+devtools::install_github("tbrugz/ribge")
+pacman::p_load(
+  e1071,
+  tidyverse,
+  janitor,
+  devtools,
+  ribge,
+  scales,
+  patchwork,
+  knitr,
+  kableExtra
+)
+
+# Removendo notação científica
+options(scipen = 999)
+```
+
+# Exercício 1
+
+Carregando a base de dados:
+
+```{r}
+#| label: base-dados
+
+pop2020 <- ribge::populacao_municipios(ano = 2020)
+```
+
+1. Qual é a unidade de análise desse banco de dados? Quantas observações estão listadas?
+
+\textcolor{red}{Resposta:} A unidade de análise do banco de dados é o município. Ao todo, são `r nrow(pop2020)` observações.
+
+2. Quantas variáveis estão contidas nesse banco de dados?
+
+\textcolor{red}{Resposta:} Estão contidas `r ncol(pop2020)` variáveis.
+
+3. Comente sobre outros aspectos da base de dados que considerar interessante, curioso ou que tenha gerado algum tipo de dúvida.
+
+\textcolor{red}{Resposta:} A base de dados possui as mesmas variáveis tanto no formato número quanto no formato textual. Por exemplo, a variável \texttt{populacao\_str}  armazena as informações de população no formato de string, enquanto a variável `populacao` armazena as informações no formato numeric. Além disso, não reconheço a variável \texttt{codigo\_munic} e precisaria consultar o dicionário de variáveis para um melhor entendimento.
+
+4. Utilize a função `select()`do pacote `dplyr` para estas três variáveis: “uf”, “nome_munic”, “populacao”.
+
+```{r}
+#| label: funcao-select
+pop2020 <- pop2020 |> 
+  dplyr::select(uf, nome_munic, populacao)
+```
+
+5. Renomeie a variável “nome_munic”para “municipio”. Utilize a função `rename()`.
+
+```{r}
+#| label: funcao-rename
+pop2020 <- pop2020 |> 
+  dplyr::rename(
+    municipio = nome_munic
+  )
+```
+
+6.  Por fim, transforme todos os caracteres dos nomes de município na coluna “municipio” em minúsculo. A função `mutate()` permite criar novas variáveis, e a função `tolower()`^[Optei por usar a função `str_to_lower` do pacote `stringr` para manter a consistência do Tidyverse.] transforma todos as letras em minúsculas. Combine as duas para resolver o exercício.
+
+```{r}
+#| label: funcao-mutate
+pop2020 <- pop2020 |> 
+  dplyr::mutate(
+    municipio_lower = stringr::str_to_lower(municipio)
+  )
+```
+
+# Analisando o Estado de São Paulo
+
+Filtrando os municípios do Estado de São Paulo:
+
+```{r}
+pop_sp_2020 <- pop2020 |> 
+  dplyr::filter(uf == "SP")
+```
+
+1. Quantos municípios há no Estado de São Paulo?
+
+\textcolor{red}{Resposta:} O Estado de São Paulo possui `r nrow(pop_sp_2020)` municípios.
+
+2. Qual o menor município do Estado para o ano de 2020? Quantos habitantes ele tinha?
+
+\textcolor{red}{Resposta:} O menor município do Estado em 2020 foi `r pop_sp_2020$municipio[which.min(pop_sp_2020$populacao)]`, 
+com `r min(pop_sp_2020$populacao)` habitantes.
+
+3. Quantos municípios paulistas tem uma população maior que um milhão de habitantes? Liste-os, mencionando também a população de cada um.
+
+```{r}
+pop_sp_milhao <- pop_sp_2020 |> 
+  filter(
+    populacao > 1000000
+)
+```
+
+\textcolor{red}{Resposta:} Ao todo, `r nrow(pop_sp_milhao)` possuem mais de um milhão de habitantes. São eles: `r glue::glue_collapse(glue::glue("{pop_sp_milhao$municipio} ({format(pop_sp_milhao$populacao, big.mark='.', decimal.mark=',', trim=TRUE)})"), sep = ", ", last = " e ")`.
+
+# Estatística descritiva dos dados
+
+Estatisticas descritivas usando a função `summarize()`
+```{r}
+#| label: funcao-summarize
+
+descritivas <- pop_sp_2020 |> 
+  summarize(
+    media = mean(populacao),
+    mediana = median(populacao),
+    desvio_padrao = sd(populacao),
+    variancia = var(populacao)
+  )
+```
+
+1. Média
+
+\textcolor{red}{Resposta:} A média da população do Estado é `r format(descritivas$media, big.mark='.', decimal.mark=',')`. 
+
+2. Mediana
+
+\textcolor{red}{Resposta:} A mediana da população do Estado é `r format(descritivas$mediana, big.mark='.', decimal.mark=',')`.
+
+3. Desvio-padrão
+
+\textcolor{red}{Resposta:} O desvio padrão da população do Estado é `r format(descritivas$desvio_padrao, big.mark='.', decimal.mark=',')`.
+
+4. Variância
+
+\textcolor{red}{Resposta:} A variância da população do Estado é `r format(descritivas$variancia, big.mark='.', decimal.mark=',')`.
+
+# Trabalhando com gráficos
+
+1. Construa um gráfico de densidade (geom_density()) da variável população dos municípios paulistas. Extra: tente mudar a cor (argumento colour = ), e preenchimento da curva (argumento fill = ), e a transparência da curva (argumento alpha = ) de seu gráfico.
+
+```{r}
+#| label: fig-densidade-populacao
+#| fig-cap: "Densidade da População dos Municípios Paulistas (2020)"
+#| fig-subcap: "Escala linear no eixo X"
+#| fig-cap-location: top
+
+
+pop_sp_2020 |> 
+  ggplot(aes(x = populacao)) + 
+  geom_density(
+    colour = "darkblue",   # cor da linha
+    fill = "skyblue",      # cor do preenchimento
+    alpha = 0.5            # transparência do preenchimento
+  ) +
+  scale_x_continuous(labels = scales::comma_format(
+    big.mark = ".", decimal.mark = ",")) +  
+  labs(
+    x = "População",
+    y = "Densidade",
+    caption = "Elaborado por Artur Damião\n com dados do pacote ribge"
+  ) +
+  theme_bw(base_family = "serif")
+```
+
+2. Comente o gráfico gerado. O que você observa?^[Eu havia feito o gráfico inicialmente com escala logarítmica porque a visualização estava difícil, seguindo os comentários de revisão da Lista. Mas, só depois, vi que o exercício 06 se trata dessa transformação.]
+
+\textcolor{red}{Resposta:} É um grafico bastante assimétrico à direita, em virtude de poucos municípios com muitos milhões de habitantes. Entretanto, a maior parte dos municípios paulistas possuem uma população menor que 100.000 habitantes. Mais especificamente, a vasta maioria dos municípios possuem uma população ao redor de 10.000 habitantes. Isso pode ser confirmado pelo valor da mediana (`r format(descritivas$mediana, big.mark='.', decimal.mark=',')`, conforme exercício 3.2). 
+
+3. A partir da observação do gráfico, qual parece ser a medida mais adequada de tendência central da população: a média ou a mediana? Justifique sua resposta.
+
+\textcolor{red}{Resposta:} A mediana. Isso porque a grande maioria dos municípios, conforme apresentado na @fig-densidade-populacao-50, possui população mais próxima de 10.000 habitantes. A média, por sua vez, foi de `r format(descritivas$media, big.mark='.', decimal.mark=',')`, bem diferente da realidade. Como possuímos valores discrepantes, a média dá a entender que a maioria dos municípios são maiores do que são de fato.
+
+# Gráfico de densidade de pequenos municípios
+
+1.  Crie um gráfico de densidade apenas para os municípios com menos de 50.000 habitantes.
+
+```{r}
+#| label: fig-densidade-populacao-50
+#| fig-cap: "Densidade da População dos Municípios Paulistas Menores que 50 mil Habitantes (2020)"
+#| fig-subcap: "Escala linear no eixo X"
+#| fig-cap-location: top
+
+
+pop_sp_2020 |> 
+  filter(populacao < 50000) |> 
+  ggplot(aes(x = populacao)) + 
+  geom_density(
+    colour = "darkblue",   # cor da linha
+    fill = "skyblue",      # cor do preenchimento
+    alpha = 0.5            # transparência do preenchimento
+  ) +
+  scale_x_continuous(labels = scales::comma_format(
+    big.mark = ".", decimal.mark = ",")) + 
+  labs(
+    x = "População",
+    y = "Densidade",
+    caption = "Elaborado por Artur Damião\n com dados do pacote ribge"
+  ) +
+  theme_bw(base_family = "serif")
+```
+
+
+2. Quantos são os municípios paulistas com menos de 50.000 habitantes? Qual a porcentagem dessas cidades em relação ao conjunto de municípios do estado? Tente fazer a conta pelo R.
+
+```{r}
+#| label: calculo-populacional
+#| eval: false
+#| include: true
+
+# Usando o R base e sem criar novos objetos.
+
+## Número de municípios menores que 50 mil
+sum(pop_sp_2020$populacao < 50000)
+
+## Porcentagem em relação ao total
+sum(pop_sp_2020$populacao < 50000) / nrow(pop_sp_2020) * 100
+```
+
+
+\textcolor{red}{Resposta:} Ao todo, o Estado de São Paulo possui `r sum(pop_sp_2020$populacao < 50000)` com população menor que 50 mil habitantes. Essa porcentagem representa `r paste0(format(round(sum(pop_sp_2020$populacao < 50000) / nrow(pop_sp_2020) * 100, 2), decimal.mark = ","), "%")` do total de municípios.
+
+3. Em comparação com o gráfico da questão anterior,o que você observa?
+
+\textcolor{red}{Resposta:} É possível ter a dimensão de que a maior parte dos municípios se concentram ao redor dos 10 mil habitantes. A mediana do banco de dados sugere o mesmo. 
+
+# Trabalhando com escala logarítmica
+
+1. Crie novamente um gráfico de densidade para todos os municípios de SãoPaulo,mas agora utilize a variável de população em logaritmo.
+
+```{r}
+#| label: fig-densidade-populacao-lado-lado
+#| echo: false
+#| layout-ncol: 2
+#| fig-cap: "Densidade da População dos Municípios Paulistas (2020)"
+#| fig-subcap:
+#|   - "Escala linear"
+#|   - "Escala logarítmica"
+#|   - "Variável logaritmo natural"
+#| fig-cap-location: top
+
+
+# Gráfico com escala linear
+ggplot(pop_sp_2020, aes(x = populacao)) +
+  geom_density(colour = "darkblue", fill = "skyblue", alpha = 0.5) +
+  scale_x_continuous(labels = comma_format(big.mark = ".", decimal.mark = ",")) +
+  labs(x = "População", y = "Densidade") +
+  theme_bw(base_family = "serif")
+
+# Gráfico com escala logarítmica
+ggplot(pop_sp_2020, aes(x = populacao)) +
+  geom_density(colour = "darkblue", fill = "skyblue", alpha = 0.5) +
+  scale_x_log10(labels = comma_format(big.mark = ".", decimal.mark = ",")) +
+  labs(x = "População", y = "Densidade") +
+  theme_bw(base_family = "serif")
+
+# Gráfico com variável população logaritmo natural
+pop_sp_2020 |> 
+  mutate(
+    populacao_log = log(populacao)
+  ) |> 
+  ggplot(aes(x = populacao_log)) +
+  geom_density(colour = "darkblue", fill = "skyblue", alpha = 0.5) +
+  scale_x_continuous(labels = comma_format(big.mark = ".", decimal.mark = ",")) +
+  labs(x = "População", y = "Densidade") +
+  theme_bw(base_family = "serif")
+```
+
+
+
+\textcolor{red}{Resposta:} Criei 03 gráficos para fins comparativos: o primeiro gráfico, como na @fig-densidade-populacao, o segundo utilizando a função `scale::scale_x_continous` e o terceiro criando uma variável de logaritmo natural usando a função `log()`. Entre as @fig-densidade-populacao-lado-lado-2 e @fig-densidade-populacao-lado-lado-3, a única diferença é a casa dos milhares para a variável População. 
+
+2. Comente o gráfico de densidade, comparando como gráfico do exercício 4.1.
+
+\textcolor{red}{Resposta:} A @fig-densidade-populacao-lado-lado-2 possibilita uma visualização melhor da distribuição da população dos municípios, ao invés da @fig-densidade-populacao-lado-lado-1, que, devido ao tamanho de municípios maiores, dificulta a visualização.
+
+# Médias da população por estado
+
+1. Assim como foi feito para os municípios do estado de São Paulo, calcule a média da população para cada um dos estados brasileiros.
+
+\textcolor{red}{Resposta:} A @tbl-media-pop-uf representa a média da população para os 05 primeiros estados da federação (ordem alfábetica pela UF). 
+
+```{r}
+#| label: tbl-media-pop-uf
+#| tbl-cap: "Média de população por UF"
+#| tbl-cap-location: top
+
+media_populacao_uf <- pop2020 |>
+  group_by(uf) |> 
+  summarise(
+    media   = mean(populacao, na.rm = TRUE)
+  )
+
+media_populacao_uf |> head(5) |> kable(
+  col.names = c("UF", "Média"),
+  digits = 2,
+  format.args = list(big.mark = ".", decimal.mark = ",")
+)
+```
+
+2. Quais dos estados possuem maior e menor população média por município?
+
+\textcolor{red}{Resposta:} A @tbl-media-menor-pop-uf-1 apresenta as 05 UFs com menor média de população por município (Tocantins, Piauí, Paraíba, Rio Grande do Norte e Rio Grande do Sul), enquanto a @tbl-media-menor-pop-uf-2 apresenta as 05 UFs com maior média de população por município (Distrito Federal, Rio de Janeiro, São Paulo, Amapá e Pará). 
+
+```{r}
+#| label: tbl-media-menor-pop-uf
+#| tbl-cap: "Média de população por município, por UF"
+#| tbl-subcap: 
+#|   -  "Menor média"
+#|   -  "Maior média"
+#| tbl-cap-location: top
+#| layout-ncol: 2
+#| tbl-pos: H
+
+
+media_populacao_uf |> arrange(media) |> head(5) |> kable(
+  col.names = c("UF", "Média"),
+  digits = 2,
+  format.args = list(big.mark = ".", decimal.mark = ",")
+)
+media_populacao_uf |> arrange(desc(media)) |> head(5) |> kable(
+  col.names = c("UF", "Média"),
+  digits = 2,
+  format.args = list(big.mark = ".", decimal.mark = ",")
+)
+```
+
