@@ -1,13 +1,20 @@
 ---
-title: "Replicação: A redução da maioridade penal diminui a violência? Evidências de um estudo
-  comparado"
-format: html
+title: "Replicação: A redução da maioridade penal diminui a violência? Evidências de um estudo comparado"
+format: 
+  html: 
+    toc: true
+    toc-depth: 2
+    toc-location: left
+    toc-title: "Sumário"
+    
 
 author: 
   - name: Artur Damião
     email: arturcardoso@usp.br
     orcid: 0000-0002-8628-1653
 
+date: today
+date-format: "long"
 number-sections: true
 
 lang: pt
@@ -26,23 +33,26 @@ pacman::p_load(
   janitor,
   stargazer,
   rio,
-  data.table
+  data.table,
+  lmtest,
+  sandwich,
+  performance
 )
 ```
 
-## Dados
+## Dados {.unnumbered}
+
+Lendo a base de dados direto do Github
 
 ```{r}
-# Lendo a base de dados
-
 link <- "https://github.com/mgaldino/lab-regressao-aula/blob/main/trabalho%20final/4Lins_2016/maioridade.tab?raw=true"
 
-df <- data.table::fread(link)
+df <- readRDS("../dados/maioridade-replicacao.rds")
 ```
 
-```{r}
-# Transformando as variáveis
+Transformando as variáveis 
 
+```{r}
 df <- df %>% 
   janitor::clean_names() %>% 
   dplyr::mutate(
@@ -90,6 +100,34 @@ modelo_acr_cipriani <- lm(homi_rate_unodc ~ acr_cipriani + idh + desemprego_long
 Apresentando os modelos
 ```{r}
 stargazer::stargazer(modelo_acm_hazel, modelo_acm_gv, modelo_acr_hazel, modelo_acr_cipriani,
-                     type = "text")
+                     type = "text",
+                     title = "Resultados das Regressões",
+                     style = "ajps")
+```
+
+# Analisando o erro padrão robusto
+
+## ACM_HAZEl
+
+```{r}
+coeftest(modelo_acm_hazel, vcov = vcovHC(modelo_acm_hazel, type = "HC1"))
+```
+
+## ACM_GV
+
+```{r}
+coeftest(modelo_acm_gv, vcov = vcovHC(modelo_acm_gv, type = "HC1"))
+```
+
+## ACR_HAZEL
+
+```{r}
+coeftest(modelo_acr_hazel, vcov = vcovHC(modelo_acr_hazel, type = "HC1"))
+```
+
+## ACR_CIPRIANI
+
+```{r}
+coeftest(modelo_acr_cipriani, vcov = vcovHC(modelo_acr_cipriani, type = "HC1"))
 ```
 
