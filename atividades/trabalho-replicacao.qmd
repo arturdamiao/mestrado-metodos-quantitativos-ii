@@ -1,0 +1,95 @@
+---
+title: "Replicação: A redução da maioridade penal diminui a violência? Evidências de um estudo
+  comparado"
+format: html
+
+author: 
+  - name: Artur Damião
+    email: arturcardoso@usp.br
+    orcid: 0000-0002-8628-1653
+
+number-sections: true
+
+lang: pt
+
+embed-resources: true
+
+execute: 
+  warning: false
+---
+
+# Ambientação {.unnumbered}
+
+```{r}
+pacman::p_load(
+  tidyverse,
+  janitor,
+  stargazer,
+  rio,
+  data.table
+)
+```
+
+## Dados
+
+```{r}
+# Lendo a base de dados
+
+link <- "https://github.com/mgaldino/lab-regressao-aula/blob/main/trabalho%20final/4Lins_2016/maioridade.tab?raw=true"
+
+df <- data.table::fread(link)
+```
+
+```{r}
+# Transformando as variáveis
+
+df <- df %>% 
+  janitor::clean_names() %>% 
+  dplyr::mutate(
+    acr_cipriani = ifelse(acr_cipriani == 999, NA, acr_cipriani)
+    )
+```
+
+
+# Hipóteses
+
+O objetivo dos autores é testar a hipótese de que quanto menor a maioridade penal, menor o nível de violência. A @eq-regressao apresenta o modelo estimado: 
+
+$$
+Y = \alpha + \beta_1X_1 + \beta_2X_2 + \beta_3X_3 + \beta_4X_4 + \epsilon
+$$ {#eq-regressao}
+
+Onde, 
+
+$Y$: Taxa de Homicídio por 100 mil habitantes (`homi_rate_unodc`)
+
+$X_1$: Idade de Maioridade Penal ou Responsabilidade Criminal (`acm_hazel`, `acm_gv`, `acr_hazel` ou `acr_cipriani`)
+
+$X_2$: Índice de Desenvolvimento Humano (`idh`)
+
+$X_3$: Índice Gini (`ginmar_solt`)
+
+$X_4$: Desemprego de longo termo (`desemprego_longo`)
+
+Criando os modelos
+
+```{r}
+modelo_acm_hazel <- lm(homi_rate_unodc ~ acm_hazel + idh + desemprego_longo + ginmar_solt,
+                       data = df)
+
+modelo_acm_gv <- lm(homi_rate_unodc ~ acm_gv + idh + desemprego_longo + ginmar_solt,
+                       data = df)
+
+modelo_acr_hazel <- lm(homi_rate_unodc ~ acr_hazel + idh + desemprego_longo + ginmar_solt,
+                       data = df)
+
+modelo_acr_cipriani <- lm(homi_rate_unodc ~ acr_cipriani + idh + desemprego_longo + ginmar_solt,
+                       data = df)
+```
+
+Apresentando os modelos
+```{r}
+stargazer::stargazer(modelo_acm_hazel, modelo_acm_gv, modelo_acr_hazel, modelo_acr_cipriani,
+                     type = "text")
+```
+
