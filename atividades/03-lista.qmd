@@ -1,0 +1,239 @@
+---
+title: "Lista 03 - Simulações"
+
+date: today
+date-format: "long"
+
+author:
+  - name: Artur Damião
+
+#thanks: "Número USP: 10701251. E-mail: arturcardoso@usp.br"
+abstract: "Número USP: 10701251. E-mail: arturcardoso@usp.br"
+
+format: 
+  pdf:
+    colorlinks: true
+    fontsize: "12"
+    papersize: a4
+    geometry:
+      - top=30mm
+      - bottom=20mm
+      - left=30mm
+      - right=20mm
+      - heightrounded
+
+lang: pt
+number-sections: true
+
+# toc: true
+# toc-depth: 3
+
+bibliography: C:/Users/artur/OneDrive/Área de Trabalho/Projetos/00-referencias-zotero/all-zotero-bib.bib
+---
+
+
+```{r}
+#| include: false
+library(tidyverse)
+set.seed(13) 
+```
+
+
+# Começando a simular dados
+
+1. 
+
+```{r}
+#| eval: false
+?rnorm
+?rbinom
+```
+
+A função `rnorm` refere-se à **distribuição normal**, ao passo que a função `rbinom` refere-se à uma **distribuição binomial**. Na primeira, os principais parâmetros são: o número de observações a serem geradas, a média da distribuição (`mean()`,com *default* igual a 0) e o desvio padrão (`sd()`, com *default* igual a 1). Na segunda, os principais parâmetros são o número de observações, o número de tentativas em cada observação (`size()`) e a probabilidade de sucesso (`prob()`). 
+
+2. 
+
+Para a **distribuição normal**, a $\mathbb{E} = 0$ e a variância é o $\sigma$ ao quadrado, ou seja, 100. Para a **distribuição binomial**, a $\mathbb{E}(X)$ é calculada a a partir de $n \times p$, logo é 70. A variância é calculada como $n \times p \times (1 - p)$, ou seja, 21. 
+
+3. 
+
+```{r}
+vetor_normal <- rnorm(n = 100, mean = 0, sd = 10)
+vetor_binomial <- rbinom(n = 100, size = 100, prob = 0.7)
+
+# Plotar lado a lado
+par(mfrow = c(1, 2))
+
+hist(vetor_normal, main = "Histograma da Normal", xlab = "Valores")
+hist(vetor_binomial, main = "Histograma da Binomial", xlab = "Valores")
+```
+
+4. 
+
+```{r}
+media_normal_1 <- mean(vetor_normal)
+var_normal_1 <- var(vetor_normal)
+
+media_binomial_1 <- mean(vetor_binomial)
+var_binomial_1 <- var(vetor_binomial)
+```
+
+A média amostral da distribuição normal é `r round(media_normal_1, 2)` e a variância é `r round(var_normal_1, 2)`. A média amostral da distribuição binomial é `r round(media_binomial_1, 2)`, enquanto a variância é `r round(var_binomial_1, 2)`. Os valores não são exatamente iguais, porque a **Lei dos Grandes Números** ($n = 100$, no nosso caso) coloca que os valores amostrais tendem a se convergir para os valores da população à medida que a amostra aumenta. 
+
+5. 
+
+```{r}
+vetor_normal_2 <- rnorm(n = 100, mean = 0, sd = 10)
+vetor_binomial_2 <- rbinom(n = 100, size = 100, prob = 0.7)
+
+media_normal_2 <- mean(vetor_normal_2)
+var_normal_2 <- var(vetor_normal_2)
+
+media_binomial_2 <- mean(vetor_binomial_2)
+var_binomial_2 <- var(vetor_binomial_2)
+```
+
+A nova média amostral da distribuição normal é `r round(media_normal_2, 2)` e a variância é `r round(var_normal_2, 2)`. A nova média amostral da distribuição binomial é `r round(media_binomial_2, 2)` e a variância é `r round(var_binomial_2, 2)`. Os valores não são iguais aos teóricos nem aos valores do item anterior porque a amostragem é aleatória (variabilidade). Cada amostra terá sua própria média e variância. 
+
+# Simulando a Normal múltiplas vezes
+
+1. 
+```{r}
+medias_10 <- numeric(10)
+for (i in 1:10) {
+  amostra <- rnorm(n = 10, mean = 0, sd = 1)
+  medias_10[i] <- mean(amostra)
+}
+
+print(medias_10)
+```
+
+2. 
+```{r}
+medias_50 <- numeric(50) # Vetor vazio
+for (i in 1:50) {
+  amostra <- rnorm(n = 10, mean = 0, sd = 1)
+  medias_50[i] <- mean(amostra)
+}
+
+print(medias_50)
+```
+
+3. 
+
+```{r}
+par(mfrow = c(1, 2))
+
+hist(medias_10, main = "10 Médias Amostrais", xlab = "Média")
+hist(medias_50, main = "50 Médias Amostrais", xlab = "Média")
+```
+
+Cada histograma representa a média das distribuições amostrais. A média calculada é a média da média. A média da média amostral é a estimativa da média populacional (teoricamente 0). 
+
+4^[Para este exercício, consultei o ChatGPT. Inicialmente, criei um objeto para cada simulação, mas não gosto de criar muitos objetos no `R`. Como não consegui entender como deixar um código reduzido, recorri à IA.]. 
+
+
+```{r}
+simulacoes <- c(10, 30, 50, 100, 1000)
+
+lista_de_medias <- list()
+
+for (n_sim in simulacoes) {
+  vetor_temp <- numeric(n_sim)
+  for (i in 1:n_sim) {
+    vetor_temp[i] <- mean(rnorm(n = 10, mean = 0, sd = 1))
+  }
+  lista_de_medias[[as.character(n_sim)]] <- vetor_temp
+}
+```
+
+5. 
+
+Para esta operação, utilizei a função `sapply()` para calcular todas as médias de uma vez e o pacote `tidyverse` para visualização. 
+
+```{r}
+# Calculando médias
+medias_das_simulacoes <- sapply(lista_de_medias, mean)
+
+# Empilhando dados para fazer o plot
+df_densidade <- enframe(lista_de_medias, name = "simulacao", value = "media") %>%
+  unnest(cols = c(media)) %>%
+  mutate(simulacao = factor(simulacao, levels = as.character(simulacoes)))
+
+# Plotando gráfico de densidade
+ggplot(df_densidade, aes(x = media, fill = simulacao)) +
+  geom_density(alpha = 0.5) +
+  facet_wrap(~simulacao, scales = "free_y") +
+  labs(title = "Distribuição das Médias Amostrais por N de Simulações",
+       x = "Média Amostral",
+       y = "Densidade") +
+  theme_classic()
+```
+
+Percebe que, à medida que o número de simulações aumenta (de 10 para 1000), a média das médias amostrais tende a se aproximar de 0, que é a estimativa de média populacional mencionada no exercício 2.3. O gráfico com 1000 simulações é o que mais se aproxima de uma **distribuição normal**. É uma demonstração do **Teorema do Limite Central**. 
+
+# Um pouco mais sobre variáveis aleatórias
+
+1. 
+
+$U \sim Unif(0,1)$ é uma distribuição uniforme com intervalo entre 0 e 1. A função no `R` é `runif()`^[Consultei a família de distribuições do pacote `{stats}.]. A $\mathbb{E}(U) = 0,5$. 
+
+$B \sim Binom(100, 0.6)$ é uma distribuição binomial com 100 tentativas e probabilidade de sucesso de 0.6. A $\mathbb{E}(B) = 60$. 
+
+2. 
+
+```{r}
+iteracoes <- c(10, 100, 1000)
+lista_medias_unif <- list()
+lista_medias_binom <- list()
+
+# distribuição Uniforme
+for (n_iter in iteracoes) {
+  medias_temp <- numeric(n_iter)
+  for (i in 1:n_iter) {
+    medias_temp[i] <- mean(runif(n = 100, min = 0, max = 1))
+  }
+  lista_medias_unif[[as.character(n_iter)]] <- medias_temp
+}
+
+# Loop para a distribuição Binomial
+for (n_iter in iteracoes) {
+  medias_temp <- numeric(n_iter)
+  for (i in 1:n_iter) {
+    medias_temp[i] <- mean(rbinom(n = 100, size = 100, prob = 0.6))
+  }
+  lista_medias_binom[[as.character(n_iter)]] <- medias_temp
+}
+```
+
+3. 
+
+Calcular as médias:
+
+```{r}
+# Médias uniformes
+sapply(lista_medias_unif, mean)
+```
+
+```{r}
+# Médias Binomial
+sapply(lista_medias_binom, mean)
+```
+
+Plotando Histogramas:
+
+```{r}
+par(mfrow = c(2, 3))
+
+# Histogramas para a Uniforme
+for (name in names(lista_medias_unif)) {
+  hist(lista_medias_unif[[name]], main = paste("Unif -", name, "médias"), xlab = "Média")
+}
+
+# Histogramas para a Binomial
+for (name in names(lista_medias_binom)) {
+  hist(lista_medias_binom[[name]], main = paste("Binom -", name, "médias"), xlab = "Média")
+}
+```
+
+A maioria dos histogramas aparentam se aproximar de uma distribuição normal, mesmo sendo distribuições de tipos diferentes. 

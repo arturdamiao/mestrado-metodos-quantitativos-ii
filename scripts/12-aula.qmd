@@ -1,0 +1,47 @@
+---
+title: "Missing Data"
+format: html
+---
+
+# Como lidar com dados ausentes 
+
+O que fazer com missings? O procedimento mais comum é simplesmente descartar essas linhas do banco de dados: `drop_na()`. Ao fazer isso, estamos fazendo suposições sobre o banco de dados. 
+
+* Quais são os pressupostos possíveis para os dados ausentes?
+
+
+Quando rodamos uma regressão, dizemos que nosso parâmetro é _point identified_, ou seja, o valor é possível de ser estimado. Com dados ausentes, pode ser que não seja possivel estimar o parâmetro perfeitamente. Mas, ainda sim, é possível estimar o parâmetro denro de um interalo. 
+
+Colocar números, ao invés de preencher com `na`, é possível fazer operações matemáticas. 
+
+
+$Y$ pode assumir um número finito de valores: 
+
+$$Y \in [0,1]$$
+
+Por exemplo: 
+
+\begin{align}
+\bar{y} &= \frac{1 + 0 + 1 + 0 + 0 + 1}{6} \\ 
+ &= \frac{3}{6} \\ 
+ &= \frac{1}{2}
+\end{align}
+
+
+## Sharp Bounds for Expected Values
+
+A supsição importante é que o $y$ é limitado. Ele está em um intervalo $y \subseteq [a,b]$
+
+A média ponderada é o que está sendo imputada em um valor _missing_. Observado do obsevados $\times$ proporção de observados mais a proporção dos casos que não foram observados. 
+
+$$
+\mathbb{E}[{Y_i}^* | R =1 ] \cdot P(R_i = 1) \cdot bPr({R_i} =0 )
+$$
+
+
+Facilmente,  
+
+## Imputar com base nos preditores
+
+AChar os coeficientes do modelo de regressão, só com os observados, e dizer: controlado para os preditores, é como se fosse aleatóri o que é missing e o que não é missing. 
+

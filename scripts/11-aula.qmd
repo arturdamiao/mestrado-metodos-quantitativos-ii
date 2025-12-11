@@ -1,0 +1,97 @@
+---
+title: "Aula 11 - Modelos Lineares Generalizados"
+author: "Artur Damião"
+format: html
+embed-resources: true
+execute: 
+  warning: false
+
+---
+
+$Y_I$ é igual à uma constante + uma coisa aleatória:
+
+$$Y_i = \mu_i + \epsilon_i$$ 
+
+Como resolver uma distribuição não normal? 
+
+A resposta é: Modelo de Probabilidade Linear. Ao rodar um modelo de regressão e calcular o $\hat{y}$, é uma probabilidade de alguma coisa.  
+
+Probabilidade Bernoulli:
+
+$$y_i \sim \text{Ber}(p_i)$$
+
+
+Função logística:
+
+$$f(x) = \frac{1}{1 + exp^{(-x)}}$$
+
+O número de Oiller pode ser impresso no `R` a partir do código:
+
+```{r}
+exp(1)
+```
+
+
+A função logística sempre dá um valor entre 0 e 1. 
+
+Para visualizar, é possível plotar o gráfico^[Formato em S]: 
+
+```{r}
+curve(1/(1 + exp(x)), from = 10, to = -10)
+```
+
+O efeito do preditor na logística depende de onde eu estou na curva. É como se fosse um termo de interação na regressão linear. Não existe um efeito, existe o efeito num valor específico de $x$. O efeito pode ser grande ou pequeno dependendo da posição na curva. Com vários preditores, o  valor depende também de outros preditores. 
+
+É um efeito não linear. 
+
+## Logito
+
+A função logito é a inversa da logística.
+
+$$logito(p) = log \frac{p}{1 - p}$$
+
+
+A inversa da função logística gera uma interpretação linear. A inversa é expressa pela $f^-1 (x)$. Logo:
+
+$$f^{-1}(x) = \frac{1}{1 + exp^{-x}}$$
+
+A *odds ratio* pode ser interpretada como... 
+
+Probabilidade de sucesso e probabilidade 
+
+É a razão de probabilidades: 
+
+$$log\frac{p}{1-p}$$
+
+E não:
+
+$$\frac{\frac{p}{1-p}} {\frac{p}{1-p}}$$
+
+## Probit 
+
+A diferença da logit pra probit é que usa outra transformação. 
+
+# Parte Prática
+
+```{r}
+pacman::p_load(
+  rio,
+  tidyverse,
+  data.table,
+  sjlabelled,
+  haven,
+  janitor,
+  lubridate,
+  knitr,
+  broom
+)
+```
+
+
+Lendo os dados
+
+```{r}
+lat_bar23 <- read_rds("Latinobarometro_2023_Eng_Rds_v1_0.rds")
+```
+
+

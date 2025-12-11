@@ -1,0 +1,312 @@
+---
+title: "Lista 04 - Esperança"
+
+date: today
+date-format: "long"
+
+author:
+  - name: Artur Damião \thanks{Programa de Pós-Graduação em Sociologia da Universidade de São Paulo. N° USP 10701251. arturcardoso@usp.br.}
+
+format: 
+  pdf:
+    colorlinks: true
+    fontsize: "12"
+    papersize: a4
+    geometry:
+      - top=30mm
+      - bottom=20mm
+      - left=30mm
+      - right=20mm
+      - heightrounded
+
+lang: pt
+number-sections: true
+fig-cap-location: top
+
+execute: 
+  warning: false
+  cache: true
+---
+
+# Ambientação {.unnumbered}
+
+```{r}
+library(PNADcIBGE)
+library(tidyverse)
+library(tidylog)
+library(knitr)
+
+options(scipen = 999)
+```
+
+
+# Baixando o banco de dados PNADc
+
+```{r}
+library(PNADcIBGE)
+
+#importe os dados de interesse através da função "get_pnadc"
+dados_pnad <- get_pnadc(
+  year = 2023,
+  quarter = 4,
+  design = FALSE,
+  savedir = tempdir()
+)
+
+```
+
+
+# Limpando a base de dados
+
+```{r}
+library(tidyverse)
+library(tidylog)
+dados_pnad <- dados_pnad %>%
+  select(Ano, Trimestre, UF, V2007, VD4020, VD4035)
+
+#renomeando as variáveis:
+dados_pnad <-
+  dados_pnad %>%
+  rename(
+    sexo = V2007,
+    renda = VD4020,
+    horas_trabalhadas = VD4035
+)
+
+```
+
+# Estatística descritiva dos dados
+
+1. A renda média é de R\$`r round(mean(dados_pnad$renda, na.rm = TRUE),2)`.
+
+1. A variância da renda é de R\$`r round(var(dados_pnad$renda, na.rm = TRUE),2)`.
+
+1. A renda média dos homens é R\$`r round(mean(dados_pnad$renda[dados_pnad$sexo == "Homem" & !is.na(dados_pnad$sexo)], na.rm = TRUE), 2)`, enquanto a das mulheres é de R\$`r round(mean(dados_pnad$renda[dados_pnad$sexo == "Mulher" & !is.na(dados_pnad$sexo)], na.rm = TRUE),2)`. É uma diferença de R\$`r round(mean(dados_pnad$renda[dados_pnad$sexo == "Homem" & !is.na(dados_pnad$sexo)], na.rm = TRUE), 2) - round(mean(dados_pnad$renda[dados_pnad$sexo == "Mulher" & !is.na(dados_pnad$sexo)], na.rm = TRUE), 2)`.
+
+1. A renda média em cada estado brasileiro está representada na tabela abaixo:
+
+```{r}
+dados_pnad |> 
+  dplyr::select(UF, renda) |> 
+  dplyr::group_by(UF) |> 
+  dplyr::summarise(
+    renda_media = mean(renda, na.rm = TRUE)
+  ) |> 
+  dplyr::arrange(desc(renda_media)) |> 
+  kable(
+    digits = 2,
+    col.names = c("UF", "Renda Média (R$)")
+  )
+```
+
+1. A covariância entre renda e o número de horas trabalhadas é `r round(cov(dados_pnad$renda, dados_pnad$horas_trabalhadas, use = "complete.obs"),2 )`. Este valor, sozinho, nos diz pouco. A correlação entre renda e horas trabalhadas é de `r round(cor(dados_pnad$renda, dados_pnad$horas_trabalhadas, use = "complete.obs"),2)`. 
+
+# Linearidade da esperança
+
+1. A equação é $$\mathbb{E}[aX + bY] = a \times \mathbb{E}X + b \times \mathbb{E}Y$$, onde^[Criamos um novo objeto para que os vetores criados $X$ e $Y$ tenham o mesmo tamanho]:
+
+```{r}
+dados_filtrados <- dados_pnad |> 
+  dplyr::filter(!is.na(renda) & !is.na(horas_trabalhadas))
+
+x <- dados_filtrados$renda
+y <- dados_filtrados$horas_trabalhadas
+
+a <- 2
+b <- 3
+```
+
+Logo^[Também seria possível fazer a diferença: `esquerdo - direito`, daí observaríamos se o resultado se aproxima de 0 para verificar a Linearidade da Esperança.]: 
+
+```{r}
+# Lado esquerdo: E[aX + bY]
+esquerdo <- mean(a*x + b*y)
+
+# Lado direito: aE[X] + bE[Y]
+direito <- a*mean(x) + b*mean(y)
+
+all.equal(esquerdo, direito)
+```
+
+2. O exercício demonstrou que a esperança ($\mathbb{E}$) é uma função linear, considerando duas variáveis aleatórias ($X$ e $Y$) e dois termos constantes ($a$ e $b$). 
+
+# Probabilidade condicional
+
+1. A @fig-densidade abaixo apresenta o gráfico de densidade para a variável de renda.
+
+```{r}
+#| label: fig-densidade
+#| fig-cap: "Densidade da Renda no Brasil"
+
+dados_pnad %>% 
+  filter(renda < 10000) %>% 
+  ggplot(aes(x = renda)) +
+  geom_density(
+      colour = "darkblue",   # cor da linha
+      fill = "skyblue",      # cor do preenchimento
+      alpha = 0.5            # transparência do preenchimento
+    ) +
+    scale_x_continuous(labels = scales::comma_format(
+      big.mark = ".", decimal.mark = ",")) +  
+    scale_y_continuous(labels = scales::label_percent(scale = 100)) + 
+    labs(
+      x = "Renda (R$)",
+      y = "Densidade",
+      caption = "Elaborado por Artur Damião\n com dados do pacote PNADcIBGE"
+    ) +
+    theme_bw(base_family = "serif")
+```
+O [gráfico @fig-densidade] apresenta que aproximadamente 8% do total de pessoas que ganham até 10 mil reais recebe menos de R$2.500,00.
+
+2. Probabilidade de receber $\geq$ a R\$1.000,00 ou $\leq$ a R\$2.000,00.
+
+```{r}
+probabilidade_renda <- dados_pnad %>% 
+  filter(renda < 10000 & !is.na(renda)) %>%
+  summarise(
+    total_casos = n(),
+    casos_possiveis = sum(renda >= 1000 & renda <= 2000),
+    probabilidade = casos_possiveis/total_casos
+  )
+```
+
+Considerando um total de casos de `r probabilidade_renda$total_casos` observações, dos quais `r probabilidade_renda$casos_possiveis` são casos possíveis, a probabilidade é de `r scales::percent(probabilidade_renda$probabilidade, accuracy = 0.01)`. 
+
+3.  Gráfico de densidade da renda dado que as horas trabalhadas
+
+```{r}
+#| label: fig-densidade-horas
+#| fig-cap: "Densidade da Renda no Brasil para quem trabalha até 20 horas semanais"
+
+dados_pnad %>% 
+  filter(renda < 10000 & horas_trabalhadas <= 20) %>% 
+  ggplot(aes(x = renda)) +
+  geom_density(
+      colour = "darkblue",   # cor da linha
+      fill = "skyblue",      # cor do preenchimento
+      alpha = 0.5            # transparência do preenchimento
+    ) +
+    scale_x_continuous(labels = scales::comma_format(
+      big.mark = ".", decimal.mark = ",")) +  
+    scale_y_continuous(labels = scales::label_percent(scale = 100)) + 
+    labs(
+      x = "Renda (R$)",
+      y = "Densidade",
+      caption = "Elaborado por Artur Damião\n com dados do pacote PNADcIBGE"
+    ) +
+    theme_bw(base_family = "serif")
+```
+
+4. $\mathbb{P}(1000 < X < 2000 |  Y \leq 20$
+
+```{r}
+probabilidade_horas <- dados_pnad %>% 
+  filter(renda < 10000,
+         !is.na(renda),
+         horas_trabalhadas <= 20) %>%
+  summarise(
+    total_casos = n(),
+    casos_possiveis = sum(renda > 1000 & renda < 2000),
+    probabilidade = casos_possiveis/total_casos
+  )
+```
+
+Considerando um total de casos de `r probabilidade_horas$total_casos` observações, dos quais `r probabilidade_horas$casos_possiveis` são casos possíveis, a probabilidade é de `r scales::percent(probabilidade_horas$probabilidade, accuracy = 0.01)`. 
+
+# Esperança condicional 
+
+1. $\mathbb{E}[X | 10 \leq Y \leq 20]$
+
+```{r}
+# 1. E[X | 10 <= Y <= 20]
+esperanca_cond_1 <- dados_filtrados |> 
+  filter(horas_trabalhadas >= 10, horas_trabalhadas <= 20) |> 
+  summarise(esperanca_condicional = mean(renda)) |> 
+  pull()
+
+esperanca_cond_1
+```
+A média da renda das pessoas que trabalham entre 10 e 20 horas é R\$`r round(esperanca_cond_1, 2)`.
+
+
+2. $\mathbb{E}[X | Y \leq 20]$
+
+```{r}
+# 2. E[X | Y <= 20]
+esperanca_cond_2 <- dados_filtrados |> 
+  filter(horas_trabalhadas <= 20) |> 
+  summarise(esperanca_condicional = mean(renda)) |> 
+  pull()
+
+esperanca_cond_2
+```
+
+A média da renda das pessoas que trabalham até 20h é de R\$`r round(esperanca_cond_2, 2)`.
+
+#  Questão extra/optativa
+
+1. Mostrando que $\mathbb{E}[7 \times X_i - 7 \times \bar{X}] = 0$: 
+
+Essa propriedade diz que a média dos desvios de cada ponto em relação à média geral é sempre zero. 
+
+$$
+\begin{aligned} 
+\mathbb{E}[7X_i - 7\bar{X}] &= \mathbb{E}[7X_i] - \mathbb{E}[7\bar{X}] & \text{(pela linearidade)} \\ 
+&= 7\mathbb{E}[X_i] - 7\mathbb{E}[\bar{X}] & \text{(retirando a constante)} 
+\end{aligned} 
+$$
+
+A esperança de uma observação individual, $\mathbb{E}[X_i]$, é a média populacional, que denotamos como $\mu$. A esperança da média amostral, $\mathbb{E}[\bar{X}]$, também é a média populacional $\mu$. Portanto: $$\begin{aligned} 7\mathbb{E}[X\_i] - 7\mathbb{E}[\bar{X}] &= 7\mu - 7\mu \\ &= 0 \end{aligned} $$
+
+Essa é a prova teórica. 
+
+No `R`, a esperança ($\mathbb{E}$) é calculada pela função `mean()` sobre os dados da nossa amostra. A média populacional ($\mu$) é estimada pela média amostral (`mean(x)`).
+
+```{r}
+options(scipen = 999)
+# Nosso X
+x <- dados_filtrados$renda
+
+# Nossa média amostral
+x_barra <- mean(x)
+
+resultado_1 <- mean(7 * x - 7 * x_barra)
+
+resultado_1
+```
+
+Nosso resultado é $0$. 
+
+2. Exemplificando a veracidade da equação:
+$$\mathbb{E}[(X_i - \mathbb{E}[X_i])^2 = \mathbb{E}[{X_1}^2] - (\mathbb{E}[X_i])^2$$
+
+
+No `R`:
+
+```{r}
+options(scipen = 999)
+
+# Nosso X
+x <- dados_filtrados$renda
+
+# Lado esquerdo: 
+
+## E[X]
+media_x <- mean(x)
+
+## Média dos desvios ao quadrado
+lado_esquerdo <- mean((x - media_x)^2)
+
+# Lado direito: 
+
+## E[X^2]
+media_dos_quadrados <- mean(x^2)
+
+## ((E[X])^2)
+quadrado_da_media <- (mean(x))^2
+
+lado_direito <- media_dos_quadrados - quadrado_da_media
+
+# Logo,
+all.equal(lado_esquerdo, lado_direito)
+```

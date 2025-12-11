@@ -110,24 +110,24 @@ stargazer::stargazer(modelo_acm_hazel, modelo_acm_gv, modelo_acr_hazel, modelo_a
 ## ACM_HAZEl
 
 ```{r}
-coeftest(modelo_acm_hazel, vcov = vcovHC(modelo_acm_hazel, type = "HC1"))
+coeftest(modelo_acm_hazel, vcov = vcovHC(modelo_acm_hazel, type = "HC3"))
 ```
 
 ## ACM_GV
 
 ```{r}
-coeftest(modelo_acm_gv, vcov = vcovHC(modelo_acm_gv, type = "HC1"))
+coeftest(modelo_acm_gv, vcov = vcovHC(modelo_acm_gv, type = "HC3"))
 ```
 
 ## ACR_HAZEL
 
 ```{r}
-coeftest(modelo_acr_hazel, vcov = vcovHC(modelo_acr_hazel, type = "HC1"))
+coeftest(modelo_acr_hazel, vcov = vcovHC(modelo_acr_hazel, type = "HC3"))
 ```
 
 ## ACR_CIPRIANI
 
 ```{r}
-coeftest(modelo_acr_cipriani, vcov = vcovHC(modelo_acr_cipriani, type = "HC1"))
+coeftest(modelo_acr_cipriani, vcov = vcovHC(modelo_acr_cipriani, type = "HC3"))
 ```
 

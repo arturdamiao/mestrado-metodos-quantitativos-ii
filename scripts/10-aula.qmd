@@ -1,0 +1,210 @@
+---
+title: "Viés de variável"
+format: html
+editor: source
+embed-resources: true
+execute: 
+  warning: false
+---
+# Pacotes
+
+```{r}
+library(tidyverse)
+```
+
+
+# Viés de variável omitida
+
+O viés de variável omitida é semelhante ao que se falava em relação ao viés de seleção, típico da economia no começo dos anos 2000. Basicamente, rodar uma variável que tem duas variáveis separadamente tem um resultado diferente.
+
+Exemplo: 
+
+(Equação longa)
+$$Y = \alpha +  \beta_1{X_1} + \beta_2{X_2} + \epsilon$$
+
+é diferente de
+
+$$Y = \alpha +  \beta_1{X_1} +  \epsilon$$
+
+e 
+
+$$Y = \alpha +  \beta_2{X_2} +  \epsilon$$
+
+Pensar em termos de potential outcomes, viés de seleção, é mais clean para a interpretação. 
+
+Controlar é descontar a influência de uma variável em outra. 
+
+# Erro padrão robusto $R^2$
+
+Calculamos o erro padrão supondo homocestadicidade. Ou seja, os erros têm variância igual, constante, similar, para cada nível dos preditores. 
+
+$\hat{B}$
+
+Não calcular o erro padrão robusto é perder 2 pontos. 
+
+`summary()` calcula o erro padrão homocesdástico. É necessário calcular o erro padrão robusto no R^[É o caso geral de uso.]. Usar o erro padrão homocesdástico é ignorar a incerteza. 
+
+
+Erro como homocesdasticidade:
+$\text{erro padrão} = \sigma^2(X'X)^{-1}$
+
+Como não queremo constância, utilizamos $\Omega$
+
+Pacote de erro padrão no `R` é o `{sandwich}`, que calcula o erro padrão heterocesda´tico. 
+
+## Prática no `R`
+
+
+```{r}
+#| label: fig-erro
+#| fig-cap: Simulação do erro padrão no R, induzindo ao erro.
+
+set.seed(123)
+
+x <- c(1:8, 10, 15)
+y <- c(5 + rnorm(8,sd = 1.5), 40, 65)
+df <- data.frame(y=y, x=x)
+
+df %>%
+  ggplot(aes(x=x, y=y)) + geom_point() +
+  geom_smooth(method = "lm")
+```
+
+Rodando a regressão, temos que: 
+
+```{r}
+fit <- lm(y ~x , data = df)
+summary(fit)
+```
+
+Estamos supondo que a variÂncia é homocedástica.
+
+Para checar o resultado, usamos:
+
+```{r}
+resid_sq <- residuals(fit) ^ 2
+
+df1 <- data.frame(resid = resid_sq, x = x)
+df1 %>% 
+  ggplot(aes(x =x, y = resid)) + 
+  geom_smooth(se = F)
+```
+
+Checando a fórmula:
+
+```{r}
+n <- length(y)
+sigma2 <- sigma(fit)^2
+mat_I <- diag(n)
+X <- model.matrix(fit)
+var <- sigma2*solve(t(X) %*% X)
+```
+
+É importante verificar quais tipos de default em relação ao `R`^[Por default, o `R` usa HC3. O stata usa HC1.]
+
+
+```{r}
+omega <- sigma2*mat_I
+bread <- solve(t(X)%*%X)
+meat <- (t(X) %*% omega %*% X)
+vce <- bread %*% meat %*% bread
+sqrt(diag(vce))
+```
+
+
+## HC1
+
+```{r}
+sigma2_hc1 <- residuals(fit)^2*(n/(n-2))
+omega <- sigma2_hc1*mat_I
+bread <- solve(t(X)%*%X)
+meat <- (t(X) %*% omega %*% X)
+vce <- bread %*% meat %*% bread
+sqrt(diag(vce))
+```
+
+
+## Fórmula do HC3
+
+A fórmula do HC3 é:
+
+$$\frac{\hat{e}^{2}}{(1 - h_1)^2}$$
+
+
+Calculando no `R` é: 
+
+```{r}
+sigma2_hc3 <- residuals(fit)^2/(1 - hatvalues(fit))^2
+omega <- sigma2_hc3*mat_I
+bread <- solve(t(X)%*%X)
+meat <- (t(X) %*% omega %*% X)
+vce <- bread %*% meat %*% bread
+sqrt(diag(vce))
+```
+
+O novo erro padrão é
+```{r}
+(1 - pt( 1.917635, 8)) * 2
+```
+
+# Bootstrap
+
+
+Boostrap possibilita estimar a variância do estimador apenas a partir dos dados.
+
+
+# Prática no `R`
+
+```{r}
+library(poliscidata)
+library(sjPlot)
+library(easystats)
+```
+
+
+```{r}
+dados_paises <- world %>% 
+  select(dem_score14, hdi, gini10, oecd, regionun) %>% 
+  drop_na()
+
+```
+
+```{r}
+modelo <- lm(dem_score14 ~ hdi + gini10 + oecd + regionun,
+             data = dados_paises)
+
+summary(modelo)
+```
+
+Checando o modelo^[O gáfico tinha que ser uma linha reta, sem pontos dispersos]: 
+
+```{r}
+check_heteroscedasticity(modelo) %>% plot()
+```
+
+Para corrigir o erro padrão, utiliza-se a função `easystats::model_parameters`:
+
+```{r}
+model_parameters(modelo, vcov = "HC3")
+```
+Resultados corrigidos num gráfico, primeiramente sem a correção do erro padrão robusto^[Se o intervalo de confiança cruza a linha vertifical, não é possível rejeitar a hipótese nula $H_0$ de que não cruza 0]:
+
+```{r}
+plot_model(modelo,
+           show.values = TRUE,
+           show.p = TRUE,
+           vline.color = "black")
+```
+
+
+Agora, visualizando corrigido:
+
+```{r}
+plot_model(modelo,
+           show.values = TRUE,
+           show.p = TRUE,
+           vline.color = "black",
+           vcov.fun = "HC3")
+```
+
+A Ásia quase aproxima da linha vertifical 0. A significância estatística saiu de 99% para 95%. O valor dos coeficientes não muda, apenas o intervalo de confiança. 

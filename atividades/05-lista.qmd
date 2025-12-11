@@ -1,0 +1,375 @@
+---
+title: "Lista 05 - Regressão"
+
+date: today
+date-format: "long"
+
+author:
+  - name: Artur Damião \thanks{Programa de Pós-Graduação em Sociologia da Universidade de São Paulo. N° USP 10701251. arturcardoso@usp.br.}
+
+format:
+  pdf:
+    colorlinks: true
+    fontsize: "12"
+    papersize: a4
+    geometry:
+      - top=30mm
+      - bottom=20mm
+      - left=30mm
+      - right=20mm
+      - heightrounded
+
+lang: pt
+number-sections: true
+fig-cap-location: top
+
+execute: 
+  warning: false
+---
+
+# Ambientação
+
+```{r}
+pacman::p_load(
+  rio,
+  tidyverse,
+  stargazer,
+  sjPlot,
+  lmtest,
+  sandwich,
+  performance
+)
+
+options(scipen = 999)
+```
+
+
+# Importando e limpando dados do ENEM 2023
+
+2. Lendo o documento usando a função `import` do pacote `rio`, que é mais rápido. 
+
+```{r}
+df <- rio::import("../dados/DADOS/MICRODADOS_ENEM_2023.csv")
+```
+
+3. Selecionando as variáveis de interesse.
+
+```{r}
+df <- df %>% 
+  select(NU_NOTA_CH, NU_NOTA_MT, NU_NOTA_CN, NU_NOTA_LC, TP_SEXO, TP_COR_RACA, TP_ESCOLA)
+```
+
+As variáveis selecionadas dizem respeito à nota da prova de um candidato em Ciências Humanas, Ciências da Natureza, Linguagem e Códigos, Matema´tica, bem como o Tipo de Escola cursado no Ensino Médio (Pública ou Privada), a Cor/Raça, de acordo com critérios do IBGE, e o Sexo (Masculino ou Feminino).
+
+4. Limpando a base de dados. 
+
+```{r}
+df_limpo <- df %>% 
+  filter(
+    # Filtrando notas iguais a zero
+    NU_NOTA_CH > 0,
+    NU_NOTA_MT > 0,
+    NU_NOTA_CN > 0,
+    NU_NOTA_LC > 0, 
+    
+    # Filtrando raça não declarada
+    TP_COR_RACA != 0 & TP_COR_RACA != 6,
+    
+    # Filtrando escola não declarada
+    TP_ESCOLA  != 1
+  ) %>% 
+  # Eliminando dados ausentes
+  na.exclude() %>% 
+  janitor::clean_names()
+```
+
+# Recortando os dados
+
+O meu banco é composto por `r nrow(df_limpo)` linhas, após a filtragem de dados e a exclusão de NAs. 
+
+```{r}
+set.seed(666)
+
+amostra <- df_limpo %>% slice_sample(n = 100000)
+```
+
+# Analisando os dados: regressão linear simples
+
+Objetivo: Utilizar as notas em ciências humanas para prever as notas em matemática por meio de uma regressão linear simples. Nossa equação é dada por:
+
+\begin{equation}
+\text{NU\_NOTA\_MT} = \beta_0 + \beta_1 \times \text{NU\_NOTA\_CH} + \epsilon
+\end{equation}
+
+
+1. Gráfico de dispersão
+
+```{r}
+amostra %>% 
+  ggplot(aes(x = nu_nota_ch, y = nu_nota_mt)) +
+  geom_point(
+    alpha = 0.1,
+    colour = "darkblue") +
+  labs(
+    x = "Nota em Ciências Humanas",
+    y = "Nota em Matemática"
+  )+
+  theme_bw(base_family = "serif")
+```
+
+2. Regressão linear simples^[Prefiro utilizar a função `stargazer` porque o output é melhor.]
+
+```{r}
+reg_1 <- lm(nu_nota_mt ~ nu_nota_ch,
+            data = amostra)
+
+stargazer(reg_1, type = "text")
+```
+
+De acordo com o modelo, para cada aumento de 1 ponto na nota de Ciências Humanas, a nota de matemática é esperada aumentar em 0,990, pontos em média. Isso é constatado ao interpretar o valor do $\hat{\beta_1}$, que é altamente significativo, com $p < 0.01$. Além disso, o $R^2$ é de 44,4%. Ou seja, a nota em Ciências Humanas explica 44% da variação total na nota de matemática. 
+
+# Inferência estatística
+
+1. Cálculo do intervalo de coeficiência dos coeficientes ao nível de confiança de 95%.
+
+$$IC = \hat{\beta} \pm 1.96 \times \text{Erro Padrão}$$
+
+Para $\hat{\beta_0}$ temos: 
+
+```{r}
+ic_inferior_b0 = 18.876 - (1.96 * 1.844)
+ic_superior_b0 = 18.876 + (1.96 * 1.844)
+```
+
+Para $\hat{\beta_1}$ temos:
+
+```{r}
+ic_inferior_b1 = 0.990 - (1.96 * 0.004)
+ic_superior_b1 = 0.990 + (1.96 * 0.004)
+```
+
+Usando a função `confint`: 
+
+```{r}
+confint(reg_1, level = 0.95)
+```
+
+2. Homocedasticidade e heterocedasticidade
+
+*Homocedasticidade* e heterocedasticidade referem-se à variância dos erros em um modelo de regressão. A homocedasticidade significa que os erros variam de forma constante ao redor da linha de regressão. É a premissa ideal. 
+
+A *heterocedasticidade* signfica que a dispersão dos resíduos varia à medida que a variável preditora muda. O modelo não é confiável quando a premissa é violada. 
+
+3. Recalculando o modelo de regressão
+
+```{r}
+coeftest(reg_1, vcov = vcovHC(reg_1, type = "HC1"))
+```
+
+As estimativas do modelo permanecem as mesmas, ao passo que o erro padrão apresenta uma pequena variação. Agora, é calculado o erro padrão robusto. O valor de $p$ continua significativo. 
+
+# Checagem do modelo 
+
+1. Gere os resíduos do modelo executado anteriormente
+
+```{r}
+residuos <- residuals(reg_1)
+preditor <- amostra$nu_nota_ch
+```
+
+
+2. Crie uma nova tabela com as seguintes variáveis: os resíduos gerados no item anterior e a variável preditora do nosso modelo.
+
+```{r}
+df_residuos <- data.frame(
+  residuos = residuos,
+  nu_nota_ch = preditor,
+  id = row_number(amostra)
+)
+```
+
+3. Análise dos resíduos.
+
+A média dos resíduos é de `r round(mean(df_residuos$residuos),5)`. A @fig-densidade-residuos apresenta a distribuição dos resíduos. A média dos resíduos é muito próxima de zero, e a distribuição segue uma distribuição normal. 
+
+```{r}
+#| label: fig-densidade-residuos
+#| fig-cap: "Distribuição de Densidade dos Resíduos do Modelo"
+df_residuos %>% 
+  ggplot(aes(x = residuos)) + 
+  geom_density(fill = "skyblue", alpha = 0.5) + 
+  geom_vline(xintercept = 0, color = "red", linetype = "dashed") +
+  labs(
+    x = "Resíduos",
+    y = "Densidade"
+  ) +
+  theme_bw(base_family = "serif")
+```
+
+4. Gráfico quantil-quantil
+
+O qqplot checa a normalidade dos resíduos, ao comparar os quantis dos resíduos observados com quantis teóricos. Quando a distribuição dos resíduos é normal, os pontos no gráfico QQ se alinham com a reta. 
+
+
+5. Funções `qqnorm()` e `qqline()`
+
+```{r}
+# Configurando o layout para o gráfico Q-Q
+par(mfrow = c(1, 1)) 
+
+# Gráfico Q-Q dos resíduos
+qqnorm(df_residuos$residuos, 
+       main = "Gráfico Q-Q dos Resíduos",
+       xlab = "Quantis Teóricos da Distribuição Normal",
+       ylab = "Quantis Amostrais dos Resíduos")
+
+# Adicionar a linha de referência
+qqline(df_residuos$residuos, col = "red")
+```
+
+Através do gráfico, há normalidade dos resíduos. 
+
+6. Gráfico de dispersão
+
+A @fig-preditor-residuos apresenta os resíduos contra os valores ajustados do modelo. O pressuposto da linearidade avalia se a realação entre os preditores e a variável resposta é, em média, linear. Supõe-se que $\mathbb{E}[\epsilon | X] = 0$ (a média condicional dos erros é zero, logo, o preditor e o erro não estão correlacionados). 
+
+```{r}
+#| label: fig-preditor-residuos
+#| fig-cap: "Resíduos vs. Preditor (NU_NOTA_CH)"
+df_residuos %>% 
+  ggplot(aes(x = nu_nota_ch, y = residuos)) +
+  geom_point(alpha = 0.3) +
+  geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
+  geom_smooth(method = "lm", color = "blue", se = FALSE) + # Reta de Regressão
+  labs(
+       x = "Nota em Ciências Humanas (Preditor)",
+       y = "Resíduos") +
+  theme_bw(base_family = "serif")
+```
+
+7. Quadrado dos resíduos 
+
+A @fig-quadrado-residuos confirma a presença de heterocesdaticidade, ou seja, a variância nos erros não é constante. 
+
+
+```{r}
+#| label: fig-quadrado-residuos
+#| fig-cap: "Quadrado dos Resíduos vs. Preditor (Checagem de Homoscedasticidade)"
+df_residuos <- df_residuos %>%
+  mutate(residuos_quadrado = residuos^2)
+  
+df_residuos %>% 
+ggplot(aes(x = preditor, y = residuos_quadrado)) + 
+  geom_point(alpha = 0.3) +
+  geom_smooth(method = "lm", color = "blue") +
+  labs(
+       x = "Nota em Ciências Humanas (Preditor)",
+       y = "Quadrado dos Resíduos") +
+  theme_bw(base_family = "serif")
+```
+
+9. Geração da coluna "id"
+
+A coluna "id" foi feita no ponto 1.
+
+10. Independência dos erros
+
+A @fig-independencia-erros sugere que não há correlação entre a ordem da observação e o resíduo. 
+
+
+```{r}
+#| label: fig-independencia-erros
+#| fig-cap: "Resíduos vs. Ordem da Observação (ID)"
+df_residuos %>% 
+  ggplot(aes(x = id, y = residuos)) + 
+  geom_point(alpha = 0.3) +
+  geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
+  geom_smooth(method = "lm", color = "blue", se = FALSE) +
+  labs(
+       x = "ID da Observação (Ordem)",
+       y = "Resíduos") +
+  theme_bw(base_family = "serif")
+```
+
+11. Conclusões gerais
+
+A análise conduzida até aqui sugere que o modelo linear capta, de forma razoável, a relação entre as notas em ciências humanas e matemática. Entretanto, constatamos a violação de alguns pressupostos teóricos, como a presença de heterocesdaticidade e leves desvios de na normalidade de resíduos. O pressuposto de independência dos erros foi satisfeito. 
+
+# Regressão múltipla
+
+1. Reclassificando variáveis
+
+```{r}
+amostra <- amostra %>% 
+  mutate(
+    tp_sexo = factor(tp_sexo),
+    tp_cor_raca = factor(tp_cor_raca),
+    tp_escola = factor(tp_escola),
+    
+    # Alterando os níveis
+    tp_sexo = relevel(tp_sexo, ref = "M"),
+    tp_cor_raca = relevel(tp_cor_raca, ref = "1"),
+    tp_escola = relevel(tp_escola, ref = "2")
+  )
+```
+
+2. Regressão linear múltipla 
+
+```{r}
+reg_2 <- lm(nu_nota_mt ~ nu_nota_ch + nu_nota_cn + nu_nota_lc + tp_sexo + tp_cor_raca + 
+              tp_escola, data = amostra)
+```
+
+3. Interpretando os coeficientes
+
+```{r}
+stargazer::stargazer(reg_2, type = "text")
+```
+
+Este modelo, agora com mais covariáveis, explica aproximadamente 59% da variação nas notas de matemática. Um aumento de 1 ponto na nota de Ciências da Natureza está associado a um aumento de 0.493 pontos na nota de Matemática. Um aumento de 1 ponto na nota de Linguagens e Códigos está associado a um aumento de 0.370 pontos na nota de Matemática. Um aumento de 1 ponto na nota de Ciências Humanas está associado a um aumento de 0.351 pontos na nota de Matemática. Anteriormente, vimos que o aumento de um ponto na em Ciências Humanas aumentava, em média, 0,990 na nota de matemática. Pessoas do sexo Feminino tendem a ter uma nota 27,813 pontos menor do que estudantes do sexo masculino.   
+
+Em relação à raça, cuja categoria de referência é a cor branca, pessoas de cor preta pontuam, em média, 18,3 pontos a menos que pessoas brancas; pessoas pardas pontuam, em média, 10,9 pontos a menos que pessoas brancas; pessoas amarela pontuam, em média, 1,2 pontos a menos que pessoas brancas; e pessoas indígenas pontuam, em média, 15,9 pontos a menos que pessoas brancas. 
+
+Pessoas que cursaram escola privada no ensino médio pontuam, em média, 37,8 pontos a mais que pessoas que estudaram em instituições públicas. 
+
+O valor do intercepto não faz sentido para essa análise, já que não é possível obter uma nota negativa no ENEM. 
+
+4. Comparando os modelos
+
+Como constatado pelo $R^2$ do modelo de regressão múltipla, o poder de explicação deste modelo é maior, haja vista que ele considera outras variáveis e isola o efeito de cada preditor. Ao adicionar mais variáveis, mitigamos o viés de uma variável omitida. 
+
+5. Erro padrão robusto
+
+```{r}
+coeftest(reg_2, vcov = vcovHC(reg_2, type = "HC1"))
+```
+
+Os coeficientes estimados permanecem os mesmos, considerando que o HC1 afeta apenas os erros-padrão. A significância estatística permanece. O efeito da cor amarela alterou ligeiramente. 
+
+6. Checagem do modelo de regressão múltipla. 
+
+```{r}
+performance::check_normality(reg_2)
+```
+
+
+```{r}
+performance::check_collinearity(reg_2)
+```
+
+
+```{r}
+performance::check_autocorrelation(reg_2)
+```
+
+
+```{r}
+performance::check_heteroskedasticity(reg_2)
+```
+
+
+Embora as premissas de independência dos resíduos e ausência de multicolinearidade do Modelo de Regressão Múltipla sejam satisfeitas, constatamos problemas de não normalidade dos resíduos e heterocedasticidade. A multicolinearidade é baixa, com todos os valores de VIF bem abaixo do limite de 5 ou 10, e o teste de Durbin-Watson indica que os resíduos são independentes, ou seja, não há autocorrelação. No entanto, a detecção de não normalidade dos resíduos e a heterocedasticidade nos chamam a atenção. 
+
+Ao analisarmos o HC1, que corrige a inconsistência da heterocesdaticidade, validamos as inferências estatísticas. Ou seja, os valores são robustamente significativos. O HC1 não muda o impacto dos coeficientes, mas sim reforça a confiança que temos nos valores $p$ e sua significância. 
+
+
