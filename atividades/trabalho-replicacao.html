@@ -2356,7 +2356,7 @@ window.Quarto = {
   <ul class="collapse">
   <li><a href="#acm_hazel" id="toc-acm_hazel" class="nav-link" data-scroll-target="#acm_hazel"><span class="header-section-number">2.1</span> ACM_HAZEl</a></li>
   <li><a href="#acm_gv" id="toc-acm_gv" class="nav-link" data-scroll-target="#acm_gv"><span class="header-section-number">2.2</span> ACM_GV</a></li>
-  <li><a href="#acr_hazel" id="toc-acr_hazel" class="nav-link" data-scroll-target="#acr_hazel"><span class="header-section-number">2.3</span> ACR_HAZEl</a></li>
+  <li><a href="#acr_hazel" id="toc-acr_hazel" class="nav-link" data-scroll-target="#acr_hazel"><span class="header-section-number">2.3</span> ACR_HAZEL</a></li>
   <li><a href="#acr_cipriani" id="toc-acr_cipriani" class="nav-link" data-scroll-target="#acr_cipriani"><span class="header-section-number">2.4</span> ACR_CIPRIANI</a></li>
   </ul></li>
   </ul>
@@ -2385,7 +2385,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Data de Publicação</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">3 de dezembro de 2025</p>
+      <p class="date">11 de dezembro de 2025</p>
     </div>
   </div>
   
@@ -2455,7 +2455,7 @@ Y = \alpha + \beta_1X_1 + \beta_2X_2 + \beta_3X_3 + \beta_4X_4 + \epsilon
 <span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>modelo_acr_cipriani <span class="ot">&lt;-</span> <span class="fu">lm</span>(homi_rate_unodc <span class="sc">~</span> acr_cipriani <span class="sc">+</span> idh <span class="sc">+</span> desemprego_longo <span class="sc">+</span> ginmar_solt,</span>
 <span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>                       <span class="at">data =</span> df)</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>Apresentando os modelos</p>
+<p>Apresentando os modelos:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>stargazer<span class="sc">::</span><span class="fu">stargazer</span>(modelo_acm_hazel, modelo_acm_gv, modelo_acr_hazel, modelo_acr_cipriani,</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>                     <span class="at">type =</span> <span class="st">&quot;text&quot;</span>,</span>
@@ -2499,76 +2499,68 @@ F Statistic         3.439** (df = 4; 24) 4.947*** (df = 4; 32) 6.476*** (df = 4;
 <section id="acm_hazel" class="level2" data-number="2.1">
 <h2 data-number="2.1" class="anchored" data-anchor-id="acm_hazel"><span class="header-section-number">2.1</span> ACM_HAZEl</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">coeftest</span>(modelo_acm_hazel, <span class="at">vcov =</span> <span class="fu">vcovHC</span>(modelo_acm_hazel, <span class="at">type =</span> <span class="st">&quot;HC1&quot;</span>))</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">coeftest</span>(modelo_acm_hazel, <span class="at">vcov =</span> <span class="fu">vcovHC</span>(modelo_acm_hazel, <span class="at">type =</span> <span class="st">&quot;HC3&quot;</span>))</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
 t test of coefficients:
 
-                   Estimate Std. Error t value Pr(&gt;|t|)  
-(Intercept)       19.743360   8.446895  2.3374  0.02809 *
-acm_hazel         -0.364624   0.197680 -1.8445  0.07749 .
-idh              -13.777800   6.817540 -2.0209  0.05458 .
-desemprego_longo  -0.025115   0.016815 -1.4936  0.14831  
-ginmar_solt        0.025250   0.054982  0.4593  0.65019  
----
-Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+                   Estimate Std. Error t value Pr(&gt;|t|)
+(Intercept)       19.743360  12.327708  1.6015   0.1223
+acm_hazel         -0.364624   0.248122 -1.4695   0.1547
+idh              -13.777800  10.016456 -1.3755   0.1817
+desemprego_longo  -0.025115   0.021228 -1.1831   0.2484
+ginmar_solt        0.025250   0.060727  0.4158   0.6812</code></pre>
 </div>
 </div>
 </section>
 <section id="acm_gv" class="level2" data-number="2.2">
 <h2 data-number="2.2" class="anchored" data-anchor-id="acm_gv"><span class="header-section-number">2.2</span> ACM_GV</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">coeftest</span>(modelo_acm_gv, <span class="at">vcov =</span> <span class="fu">vcovHC</span>(modelo_acm_gv, <span class="at">type =</span> <span class="st">&quot;HC1&quot;</span>))</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">coeftest</span>(modelo_acm_gv, <span class="at">vcov =</span> <span class="fu">vcovHC</span>(modelo_acm_gv, <span class="at">type =</span> <span class="st">&quot;HC3&quot;</span>))</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
 t test of coefficients:
 
-                   Estimate Std. Error t value Pr(&gt;|t|)  
-(Intercept)       33.800424  13.616793  2.4823  0.01849 *
-acm_gv            -0.224435   0.254337 -0.8824  0.38412  
-idh              -28.973692  14.079067 -2.0579  0.04782 *
-desemprego_longo  -0.103268   0.059349 -1.7400  0.09147 .
-ginmar_solt       -0.011896   0.052327 -0.2273  0.82161  
----
-Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+                   Estimate Std. Error t value Pr(&gt;|t|)
+(Intercept)       33.800424        NaN     NaN      NaN
+acm_gv            -0.224435        NaN     NaN      NaN
+idh              -28.973692        NaN     NaN      NaN
+desemprego_longo  -0.103268        NaN     NaN      NaN
+ginmar_solt       -0.011896        NaN     NaN      NaN</code></pre>
 </div>
 </div>
 </section>
 <section id="acr_hazel" class="level2" data-number="2.3">
-<h2 data-number="2.3" class="anchored" data-anchor-id="acr_hazel"><span class="header-section-number">2.3</span> ACR_HAZEl</h2>
+<h2 data-number="2.3" class="anchored" data-anchor-id="acr_hazel"><span class="header-section-number">2.3</span> ACR_HAZEL</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">coeftest</span>(modelo_acr_hazel, <span class="at">vcov =</span> <span class="fu">vcovHC</span>(modelo_acr_hazel, <span class="at">type =</span> <span class="st">&quot;HC1&quot;</span>))</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">coeftest</span>(modelo_acr_hazel, <span class="at">vcov =</span> <span class="fu">vcovHC</span>(modelo_acr_hazel, <span class="at">type =</span> <span class="st">&quot;HC3&quot;</span>))</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
 t test of coefficients:
 
-                    Estimate  Std. Error t value Pr(&gt;|t|)  
-(Intercept)       32.3996646  14.5032323  2.2340  0.03260 *
-acr_hazel         -0.2713108   0.2006218 -1.3523  0.18574  
-idh              -28.5749696  12.4775174 -2.2901  0.02875 *
-desemprego_longo  -0.0860840   0.0434330 -1.9820  0.05612 .
-ginmar_solt       -0.0097765   0.0531483 -0.1839  0.85522  
----
-Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+                    Estimate  Std. Error t value Pr(&gt;|t|)
+(Intercept)       32.3996646  20.2482962  1.6001   0.1194
+acr_hazel         -0.2713108   0.2694175 -1.0070   0.3215
+idh              -28.5749696  17.1078254 -1.6703   0.1046
+desemprego_longo  -0.0860840   0.0596491 -1.4432   0.1587
+ginmar_solt       -0.0097765   0.0614942 -0.1590   0.8747</code></pre>
 </div>
 </div>
 </section>
 <section id="acr_cipriani" class="level2" data-number="2.4">
 <h2 data-number="2.4" class="anchored" data-anchor-id="acr_cipriani"><span class="header-section-number">2.4</span> ACR_CIPRIANI</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">coeftest</span>(modelo_acr_cipriani, <span class="at">vcov =</span> <span class="fu">vcovHC</span>(modelo_acr_cipriani, <span class="at">type =</span> <span class="st">&quot;HC1&quot;</span>))</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">coeftest</span>(modelo_acr_cipriani, <span class="at">vcov =</span> <span class="fu">vcovHC</span>(modelo_acr_cipriani, <span class="at">type =</span> <span class="st">&quot;HC3&quot;</span>))</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
 t test of coefficients:
 
-                    Estimate  Std. Error t value Pr(&gt;|t|)  
-(Intercept)       30.5290454  14.6464455  2.0844  0.04519 *
-acr_cipriani      -0.0481318   0.0857174 -0.5615  0.57836  
-idh              -29.4541557  14.0067447 -2.1029  0.04343 *
-desemprego_longo  -0.1024865   0.0594279 -1.7246  0.09426 .
-ginmar_solt       -0.0086301   0.0507585 -0.1700  0.86606  
----
-Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+                    Estimate  Std. Error t value Pr(&gt;|t|)
+(Intercept)       30.5290454  18.4897284  1.6511   0.1085
+acr_cipriani      -0.0481318   0.1024740 -0.4697   0.6418
+idh              -29.4541557  17.6403731 -1.6697   0.1047
+desemprego_longo  -0.1024865   0.0743218 -1.3790   0.1775
+ginmar_solt       -0.0086301   0.0590773 -0.1461   0.8848</code></pre>
 </div>
 </div>
 </section>

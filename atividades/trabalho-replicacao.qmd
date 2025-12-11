@@ -97,7 +97,8 @@ modelo_acr_cipriani <- lm(homi_rate_unodc ~ acr_cipriani + idh + desemprego_long
                        data = df)
 ```
 
-Apresentando os modelos
+Apresentando os modelos:
+
 ```{r}
 stargazer::stargazer(modelo_acm_hazel, modelo_acm_gv, modelo_acr_hazel, modelo_acr_cipriani,
                      type = "text",
