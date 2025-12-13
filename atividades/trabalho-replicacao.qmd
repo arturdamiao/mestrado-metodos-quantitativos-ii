@@ -23,7 +23,7 @@ tbl-cap-location: top
 
 lang: pt
 
-# embed-resources: true
+embed-resources: true
 
 bibliography: referencias.bib
 
