@@ -17,15 +17,30 @@ date: today
 date-format: "long"
 number-sections: true
 
+fig-cap-location: top
+tbl-cap-location: top
+
 lang: pt
 
 embed-resources: true
 
+bibliography: referencias.bib
+
 execute: 
   warning: false
+  
 ---
 
-# Ambientação {.unnumbered}
+# Introdução
+
+O artigo de @lins2016 tem como objetivo investigar a possível associação entre a diminuição da maioridade penal e os níveis de violência em perspectiva comparada. Para tanto, os autores utilizaram de análise espacial, correlação de Pearson e de modelos de regressão linear de mínimos quadrados ordinários (MQO). 
+
+Em termos de avanço do artigo original, propomos a interpretação das variáveis de controle, checagem dos pressupostos do modelo e teste de robustez. 
+
+
+## Ambientação {.unnumbered}
+
+Importando os pacotes necessários. 
 
 ```{r}
 pacman::p_load(
@@ -36,13 +51,14 @@ pacman::p_load(
   data.table,
   lmtest,
   sandwich,
-  performance
+  performance,
+  knitr
 )
 ```
 
 ## Dados {.unnumbered}
 
-Lendo a base de dados direto do Github
+Lendo a base de dados direto do Github:
 
 ```{r}
 link <- "https://github.com/mgaldino/lab-regressao-aula/blob/main/trabalho%20final/4Lins_2016/maioridade.tab?raw=true"
@@ -50,7 +66,7 @@ link <- "https://github.com/mgaldino/lab-regressao-aula/blob/main/trabalho%20fin
 df <- readRDS("../dados/maioridade-replicacao.rds")
 ```
 
-Transformando as variáveis 
+Transformando as variáveis: 
 
 ```{r}
 df <- df %>% 
@@ -103,8 +119,113 @@ Apresentando os modelos:
 stargazer::stargazer(modelo_acm_hazel, modelo_acm_gv, modelo_acr_hazel, modelo_acr_cipriani,
                      type = "text",
                      title = "Resultados das Regressões",
-                     style = "ajps")
+                     dep.var.labels = c("Taxa de Homícidio (100 mil hab.)"),
+                     covariate.labels = c("ACM Hazel", "ACM GV", "ACR Hazel","ACR Cipriani", "IDH", "Desemprego Longo", "Índice de Gini"))
 ```
+
+# Interpretação dos coeficientes da regressão {#sec-interpretacao}
+
+Os coeficientes negativos da Redução da Maioridade Penal (ACM) ou Responsabilização Criminal (ACR) indicam que quanto maior a idade penal, menor a taxa de homicídios. Dessa forma, rejeitamos a $H_1$ que $\text{menor maioridade = menor violência}$. Os modelos 2 (`acm_gv`) e 4 (`acr_cipriani`) não apresentam significância estatística, ao passo que os modelos 1 (`acm_hazel`) e 3 (`acr_hazel`) apresentam significância a um nível de 10% ($p < 0.1$). É um nível de significância fraco. A partir desses dados, não é possível afirmar que a redução da maioridade penal ou responsabilidade criminal diminui as taxas de homícidio. 
+
+O Índice de Desenvolvimento Humano, ao contrário, apresenta grande significância estatística ($p<0.05$ e $p<0.01$), sendo a variável que mais explica a redução na taxa de homicídios. No primeiro modelo, a cada um ponto em que o IDH aumenta, reduz-se 13,788 pontos na taxa de homicídio; no segundo modelo, a cada aumento de um ponto no IDH, a taxa de homícidio reduz 28,974 ponto - redução semelhante para os modelos três (28,575 pontos) e quatro (29,454 pontos). 
+
+O Desemprengo Longo também apresenta sinal negativo nos coeficientes, sugerindo que um maior grau de desemprego a longo prazo está associado a uma menor taxa de homicídios. Esse resultado, contraintuitivo, pode ser causado pelas características da nossa amostra (nosso $n$ varia entre 29 ou 37) ou colinearidade com outras variáveis (especificamente o IDH). 
+
+Por fim, o Índice de Gini não apresentou nenhum valor significativo, sugerindo que a desigualdade não explica a variação da taxa de homicídio. Provavelmente isso se dá pelo $n$ pequeno. Ao interpretamos o $R^2$, vemos que nosso modelo explica, em média, `r (0.364 + 0.382 + 0.447 + 0.387)/4`% da variação nas taxas de homicídio. Ou seja, mais da metade da violência é causada por fatores que não estão em nossa equação. 
+
+# Checagem dos modelos 
+
+## Colinearidade
+
+A @tbl-vif sintetiza os valores de Variation Inflaction Factor, indicando que as variáveis são independentes entre si. Ou seja, elas contribuem de maneira distinta para o modelo. Os valores encontram-se significativamente abaixo do limite crítico de 5. Logo, desconsideramos a colinearidade suspeitada na @sec-interpretacao. 
+
+```{r}
+#| include: false
+
+# 1. Extraindo os valores dos VIFs
+vif1 <- car::vif(modelo_acm_hazel)
+vif2 <- car::vif(modelo_acm_gv)
+vif3 <- car::vif(modelo_acr_hazel)
+vif4 <- car::vif(modelo_acr_cipriani)
+
+# 2. Criando uma Tabela Unificada
+tabela_vif <- data.frame(
+  Variavel = c("Maioridade/Responsabilidade", "IDH", "Desemprego Longo", "Índice de Gini"),
+  Modelo_1_ACM_Hazel = round(as.numeric(vif1), 2),
+  Modelo_2_ACM_GV    = round(as.numeric(vif2), 2),
+  Modelo_3_ACR_Hazel = round(as.numeric(vif3), 2),
+  Modelo_4_ACR_Cipriani = round(as.numeric(vif4), 2)
+)
+```
+
+```{r}
+#| label: tbl-vif
+#| echo: false
+
+kable(tabela_vif,
+      caption = "Tabela de Multicolinearidade (VIF)",
+      align = "c",
+      col.names = c("Variável",
+                    "ACM Hazel (1)",
+                    "ACM GV (2)",
+                    "ACR Hazel (3)",
+                    "ACR Cipriani (4)"))
+```
+
+
+
+
+
+## Homocedasticidade
+
+A homocedasticidade pressupõe que os resíduos variem de forma constante ao longo dos valores previstos. Os gráficos da @fig-hetero apresentam que os erros não variam igualmente ao longo da reta. Há a presença de heterocedasticidade. 
+
+```{r}
+#| label: fig-hetero
+#| echo: false
+#| layout-ncol: 2
+#| fig-cap: "Checagem da Homocedasticidade"
+#| fig-subcap:
+#|   - "Modelo 1: ACM Hazel"
+#|   - "Modelo 2: ACM GV"
+#|   - "Modelo 3: ACR Hazel"
+#|   - "Modelo 4: ACR Cipriani"
+
+
+# 1. Plota apenas o gráfico de heterocedasticidade
+
+plot(modelo_acm_hazel,    which = 3)
+plot(modelo_acm_gv,       which = 3)
+plot(modelo_acr_hazel,    which = 3)
+plot(modelo_acr_cipriani, which = 3)
+
+```
+
+## Normalidade dos resíduos
+
+O teste de normalidade dos resíduos, apresentado na @fig-normalidade, verifica se os resíduos do modelo seguem uma distribuição normal. 
+
+```{r}
+#| label: fig-normalidade
+#| echo: false
+#| layout-ncol: 2
+#| fig-cap: "Checagem da Normalidade dos Resíduos"
+#| fig-subcap:
+#|   - "Modelo 1: ACM Hazel"
+#|   - "Modelo 2: ACM GV"
+#|   - "Modelo 3: ACR Hazel"
+#|   - "Modelo 4: ACR Cipriani"
+
+
+# 1. Plota apenas o gráfico de normalidade
+
+plot(modelo_acm_hazel,    which = 2)
+plot(modelo_acm_gv,       which = 2)
+plot(modelo_acr_hazel,    which = 2)
+plot(modelo_acr_cipriani, which = 2)
+
+```
+
 
 # Analisando o erro padrão robusto
 
@@ -132,3 +253,4 @@ coeftest(modelo_acr_hazel, vcov = vcovHC(modelo_acr_hazel, type = "HC3"))
 coeftest(modelo_acr_cipriani, vcov = vcovHC(modelo_acr_cipriani, type = "HC3"))
 ```
 
+# Referências
