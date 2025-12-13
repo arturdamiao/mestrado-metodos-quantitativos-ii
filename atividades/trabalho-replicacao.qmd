@@ -21,7 +21,6 @@ number-sections: true
 fig-cap-location: top
 tbl-cap-location: top
 
-
 lang: pt
 
 # embed-resources: true
@@ -144,7 +143,6 @@ Nesta seção, avaliamos se os modelos atendem aos pressupostos da regressão li
 1. Colinearidade
 1. Homocedasticidade
 1. Normalidade dos resíduos 
-1. 
 
 ## Colinearidade
 
@@ -191,6 +189,7 @@ kable(tabela_vif,
 
 A homocedasticidade pressupõe que os resíduos variem de forma constante ao longo dos valores previstos. Os gráficos da @fig-hetero apresentam que os erros não variam igualmente ao longo da reta. Logo, há a presença de heterocedasticidade. 
 
+
 ```{r}
 #| label: fig-hetero
 #| echo: false
@@ -216,6 +215,7 @@ plot(modelo_acr_cipriani, which = 3)
 
 O teste de normalidade dos resíduos, apresentado na @fig-normalidade, verifica se os resíduos do modelo seguem uma distribuição normal. Nosso gráfico abaixo indica que há uma assimetria nas pontas, sugerindo que nosso modelo erra mais para cima do que para baixo. 
 
+
 ```{r}
 #| label: fig-normalidade
 #| echo: false
@@ -236,7 +236,9 @@ plot(modelo_acr_hazel,    which = 2)
 plot(modelo_acr_cipriani, which = 2)
 
 ```
+
 Isso se dá, provavelmente, pelo caráter da amostra. É mais provável que poucos países concentrem taxas de homicídios mais altas, enquanto a maior parte dos países da amostra de @lins2016 tem taxas baixas ou médias. Como o $n$ ($n <40$) amostral é relativamente pequeno, os poucos casos *outliers* distorcem a normalidade dos resíduos. 
+
 
 # Analisando o erro padrão robusto
 
@@ -378,8 +380,6 @@ tidy(acr_cipriani_hc3) %>%
 
 coeftest(modelo_acr_cipriani, vcov = vcovHC(modelo_acr_cipriani, type = "HC3"))
 ```
-
-
 
 
 # Referências
