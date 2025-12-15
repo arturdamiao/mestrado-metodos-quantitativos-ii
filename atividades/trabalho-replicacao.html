@@ -2385,7 +2385,8 @@ window.Quarto = {
   <li><a href="#normalidade-dos-resíduos" id="toc-normalidade-dos-resíduos" class="nav-link" data-scroll-target="#normalidade-dos-resíduos"><span class="header-section-number">4.4</span> Normalidade dos resíduos</a></li>
   </ul></li>
   <li><a href="#analisando-o-erro-padrão-robusto" id="toc-analisando-o-erro-padrão-robusto" class="nav-link" data-scroll-target="#analisando-o-erro-padrão-robusto"><span class="header-section-number">5</span> Analisando o erro padrão robusto</a></li>
-  <li><a href="#referências" id="toc-referências" class="nav-link" data-scroll-target="#referências"><span class="header-section-number">6</span> Referências</a></li>
+  <li><a href="#avanços-em-relação-ao-trabalho-original" id="toc-avanços-em-relação-ao-trabalho-original" class="nav-link" data-scroll-target="#avanços-em-relação-ao-trabalho-original"><span class="header-section-number">6</span> Avanços em relação ao trabalho original</a></li>
+  <li><a href="#referências" id="toc-referências" class="nav-link" data-scroll-target="#referências"><span class="header-section-number">7</span> Referências</a></li>
   </ul>
 </nav>
 </div>
@@ -2412,7 +2413,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Data de Publicação</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">14 de dezembro de 2025</p>
+      <p class="date">15 de dezembro de 2025</p>
     </div>
   </div>
   
@@ -2427,7 +2428,7 @@ window.Quarto = {
 <section id="introdução" class="level1" data-number="1">
 <h1 data-number="1"><span class="header-section-number">1</span> Introdução</h1>
 <p>O artigo de <span class="citation" data-cites="lins2016">Lins, Figueiredo Filho, e Silva (<a href="#ref-lins2016" role="doc-biblioref">2016</a>)</span> tem como objetivo investigar a possível associação entre a diminuição da maioridade penal e os níveis de violência em perspectiva comparada. Para tanto, os autores utilizaram de análise espacial, correlação de Pearson e de modelos de regressão linear de mínimos quadrados ordinários (MQO).</p>
-<p>Em termos de avanço do artigo original, propomos a interpretação das variáveis de controle, checagem dos pressupostos do modelo e teste de robustez.</p>
+<p>Em termos de avanço do artigo original, propomos a interpretação das variáveis de controle, checagem dos pressupostos do modelo, a análise do erro padrão robusto e a estimação por modelos de Regressão Robusta com M-estimador de Huber.</p>
 <section id="ambientação" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="ambientação">Ambientação</h2>
 <p>Importando os pacotes necessários.</p>
@@ -2443,8 +2444,9 @@ window.Quarto = {
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  performance,</span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  knitr,</span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  modelsummary,</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  broom</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  broom,</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  MASS</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="dados" class="level2 unnumbered">
@@ -2491,17 +2493,20 @@ Y = \alpha + \beta_1X_1 + \beta_2X_2 + \beta_3X_3 + \beta_4X_4 + \epsilon
 <span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>modelo_acr_cipriani <span class="ot">&lt;-</span> <span class="fu">lm</span>(homi_rate_unodc <span class="sc">~</span> acr_cipriani <span class="sc">+</span> idh <span class="sc">+</span> desemprego_longo <span class="sc">+</span> ginmar_solt,</span>
 <span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>                       <span class="at">data =</span> df)</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>Apresentando os modelos:</p>
+<p>Apresentando os modelos na <a href="#tbl-ols" class="quarto-xref">Tabela 1</a>:</p>
+<div id="tbl-ols" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-ols-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tabela 1: Resultados das Regressões Lineares
+</figcaption>
+<div aria-describedby="tbl-ols-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>stargazer<span class="sc">::</span><span class="fu">stargazer</span>(modelo_acm_hazel, modelo_acm_gv, modelo_acr_hazel, modelo_acr_cipriani,</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>                     <span class="at">type =</span> <span class="st">&quot;html&quot;</span>,</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>                     <span class="at">title =</span> <span class="st">&quot;Resultados das Regressões&quot;</span>,</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>                     <span class="at">header =</span> <span class="cn">FALSE</span>,</span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                     <span class="at">dep.var.labels =</span> <span class="fu">c</span>(<span class="st">&quot;Taxa de Homícidio (100 mil hab.)&quot;</span>),</span>
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>                     <span class="at">covariate.labels =</span> <span class="fu">c</span>(<span class="st">&quot;ACM Hazel&quot;</span>, <span class="st">&quot;ACM GV&quot;</span>, <span class="st">&quot;ACR Hazel&quot;</span>,<span class="st">&quot;ACR Cipriani&quot;</span>, <span class="st">&quot;IDH&quot;</span>, <span class="st">&quot;Desemprego Longo&quot;</span>, <span class="st">&quot;Índice de Gini&quot;</span>)</span>
 <span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>                     )</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
 <table style="text-align:center">
-<caption>
-<strong>Resultados das Regressões</strong>
-</caption>
 <tbody><tr>
 <td colspan="5" style="border-bottom: 1px solid black">
 </td>
@@ -2984,6 +2989,9 @@ F Statistic
 </td>
 </tr>
 </tbody></table>
+</div>
+</figure>
+</div>
 </section>
 <section id="sec-interpretacao" class="level1" data-number="3">
 <h1 data-number="3"><span class="header-section-number">3</span> Interpretação dos coeficientes da regressão</h1>
@@ -3085,8 +3093,14 @@ Figura 1: Checagem da Linearidade (Resíduos X Valores Previstos)
 <p>Conforme a <a href="#fig-linearidade" class="quarto-xref">Figura 1</a>, era esperado que a linha vermelha tivesse um comportamento reto horinzontalmente, ou seja, com a média condicional dos erros iguais a zero. Todos os casos sugerem que não há relação linear entre a variável resposta e os preditores. Ademais, a presença de valores <em>outliers</em> é preocupante.</p>
 <section id="é-possível-ajustar-a-linearidade-do-modelo" class="level3 page-columns page-full" data-number="4.1.1">
 <h3 data-number="4.1.1" class="anchored" data-anchor-id="é-possível-ajustar-a-linearidade-do-modelo"><span class="header-section-number">4.1.1</span> É possível ajustar a linearidade do modelo?</h3>
-<p>A não-linearidade prejudica a confiança na interpretação dos estimadores (<span class="math inline">\(\beta\)</span>) do modelo. A não-linearidade, no nosso caso, pode se dar devido ao tamanho da amostra e a presença de <em>outliers</em>, constatada anteriormente. Para tentar solucionar este problema, aplicaremos o logaritmo natural na variável dependente<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>.</p>
-<div class="no-row-height column-margin column-container"><div id="fn1"><p><sup>1</sup> Aplicando o log na taxa de homicídio, assumimos que as variáveis explicativas tem um efeito multiplicativo e não aditivo sobre o crime.</p></div></div><div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Modelo com variável transformada</span></span>
+<p>A não-linearidade prejudica a confiança na interpretação dos estimadores (<span class="math inline">\(\beta\)</span>) do modelo. A não-linearidade, no nosso caso, pode se dar devido ao tamanho da amostra e a presença de <em>outliers</em>, constatada anteriormente. Para tentar solucionar este problema, aplicaremos o logaritmo natural na variável dependente<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>. A <a href="#tbl-ols-log" class="quarto-xref">Tabela 2</a> sintetiza o resultado:</p>
+<div class="no-row-height column-margin column-container"><div id="fn1"><p><sup>1</sup> Aplicando o log na taxa de homicídio, assumimos que as variáveis explicativas tem um efeito multiplicativo e não aditivo sobre o crime.</p></div></div><div id="tbl-ols-log" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-ols-log-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tabela 2: Regressões com Log Natural
+</figcaption>
+<div aria-describedby="tbl-ols-log-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Modelo com variável transformada</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>log_homicidio <span class="ot">&lt;-</span> <span class="fu">log</span>(df<span class="sc">$</span>homi_rate_unodc)</span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
@@ -3110,11 +3124,12 @@ Figura 1: Checagem da Linearidade (Resíduos X Valores Previstos)
 <span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>          acm_gv_log, </span>
 <span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>          acr_hazel_log, </span>
 <span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>          acr_cipriani_log,</span>
-<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>          <span class="at">type =</span> <span class="st">&quot;html&quot;</span>,</span>
-<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>          <span class="at">title =</span> <span class="st">&quot;Resultados das Regressões com Log Natural&quot;</span>,</span>
-<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>          <span class="at">dep.var.labels =</span> <span class="fu">c</span>(<span class="st">&quot;Log Natural da Taxa de Homícidio (100 mil hab.)&quot;</span>),</span>
-<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>          <span class="at">covariate.labels =</span> <span class="fu">c</span>(<span class="st">&quot;ACM Hazel&quot;</span>, <span class="st">&quot;ACM GV&quot;</span>, <span class="st">&quot;ACR Hazel&quot;</span>,<span class="st">&quot;ACR Cipriani&quot;</span>, <span class="st">&quot;IDH&quot;</span>, <span class="st">&quot;Desemprego Longo&quot;</span>, <span class="st">&quot;Índice de Gini&quot;</span>)</span>
-<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>                     )</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>          <span class="at">header =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>          <span class="at">type =</span> <span class="st">&quot;html&quot;</span>,</span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>          <span class="at">title =</span> <span class="st">&quot;Resultados das Regressões com Log Natural&quot;</span>,</span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>          <span class="at">dep.var.labels =</span> <span class="fu">c</span>(<span class="st">&quot;Log Natural da Taxa de Homícidio (100 mil hab.)&quot;</span>),</span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>          <span class="at">covariate.labels =</span> <span class="fu">c</span>(<span class="st">&quot;ACM Hazel&quot;</span>, <span class="st">&quot;ACM GV&quot;</span>, <span class="st">&quot;ACR Hazel&quot;</span>,<span class="st">&quot;ACR Cipriani&quot;</span>, <span class="st">&quot;IDH&quot;</span>, <span class="st">&quot;Desemprego Longo&quot;</span>, <span class="st">&quot;Índice de Gini&quot;</span>)</span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a>                     )</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
 <table style="text-align:center">
 <caption>
 <strong>Resultados das Regressões com Log Natural</strong>
@@ -3601,9 +3616,11 @@ F Statistic
 </td>
 </tr>
 </tbody></table>
-<p>Em termos de interpretação, o modelo …</p>
-<p>Agora, com o modelo ajustado, é possível perceber que, diferente da <a href="#fig-linearidade" class="quarto-xref">Figura 1</a>, a <a href="#fig-linearidade-log" class="quarto-xref">Figura 2</a> apresenta os valores muito mais próximo da reta. Ou seja, a média condicional dos erros está mais próxima de zero ao transformar a variável dependente em seu logaritimo natural.</p>
-<div id="fig-linearidade-log" class="quarto-layout-panel">
+</div>
+</figure>
+</div>
+<p>Em termos de interpretação do modelo ajustado, os dados de ACM Hazel, ACM GV, ACR Hazel e ACR Cipriani não apresentam significância estatística. Ou seja, a <span class="math inline">\(H_1\)</span> não é aceita. Interpretando as variáveis de controle<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>, constatamos que o Índice de Gini também não influencia de maneira significativa a taxa de homicídios. O Índice de Desenvolvimento Humano continua significativo: a cada um ponto (um centésimo, já que o IDH varia entre 0 e 1) em que o IDH aumenta, reduz-se a taxa de homícidio em 6.2% (Modelo 1), 8.3% (Modelo 2), 8.5% (Modelo 3) e 8.9% (Modelo 4).</p>
+<div class="no-row-height column-margin column-container"><div id="fn2"><p><sup>2</sup> Geralmente, as variáveis de controle são utilizadas não para serem interpretadas. Entretanto, realizamos este exercício para fins pedagógicos.</p></div></div><div id="fig-linearidade-log" class="quarto-layout-panel">
 <figure class="quarto-float quarto-float-fig figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-linearidade-log-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figura 2: Checagem da Linearidade (Resíduos X Valores Previstos) com Log Natural
@@ -3664,16 +3681,22 @@ Figura 2: Checagem da Linearidade (Resíduos X Valores Previstos) com Log Natur
 </div>
 </figure>
 </div>
+<p>Agora, com o modelo ajustado, é possível perceber que, diferente dos <a href="#fig-linearidade" class="quarto-xref">gráficos 1</a>, a <a href="#fig-linearidade-log" class="quarto-xref">Figura 2</a> apresenta os valores muito mais próximo da reta. Ou seja, a média condicional dos erros está mais próxima de zero ao transformar a variável dependente em seu logaritimo natural.</p>
+<p>Outra modificação possível seria a transformação quadrática da variável IDH. Neste caso, a <a href="#eq-regressao-quad" class="quarto-xref">Equação 2</a> representaria nosso modelo:</p>
+<p><span id="eq-regressao-quad"><span class="math display">\[
+Y = \alpha + \beta_1X_1 + \beta_2X_2 + \beta_3X_3 + \beta_4X_4 + \beta_5{IDH^2} + \epsilon
+\tag{2}\]</span></span></p>
+<p>Dessa forma, consideraríamos as relações não lineares entre as variáveis, ajustando um curva parabólica ao invés de uma curva reta.</p>
 </section>
 </section>
 <section id="colinearidade-vif-no-modelo" class="level2" data-number="4.2">
 <h2 data-number="4.2" class="anchored" data-anchor-id="colinearidade-vif-no-modelo"><span class="header-section-number">4.2</span> Colinearidade (VIF) no Modelo</h2>
-<p>A <a href="#tbl-vif" class="quarto-xref">Tabela 1</a> sintetiza os valores de Variation Inflaction Factor, indicando que as variáveis são independentes entre si. Ou seja, elas contribuem de maneira distinta para o modelo. Os valores encontram-se significativamente abaixo do limite crítico de 5. Logo, desconsideramos a colinearidade suspeitada na <a href="#sec-interpretacao" class="quarto-xref">Seção 3</a>.</p>
+<p>A <a href="#tbl-vif" class="quarto-xref">Tabela 3</a> sintetiza os valores de Variation Inflaction Factor, indicando que as variáveis são independentes entre si. Ou seja, elas contribuem de maneira distinta para o modelo. Os valores encontram-se significativamente abaixo do limite crítico de 5. Logo, desconsideramos a colinearidade suspeitada na <a href="#sec-interpretacao" class="quarto-xref">Seção 3</a>.</p>
 <div class="cell">
 <div id="tbl-vif" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-vif-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Tabela 1: Tabela de Multicolinearidade (VIF)
+Tabela 3: Tabela de Multicolinearidade (VIF)
 </figcaption>
 <div aria-describedby="tbl-vif-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
@@ -3865,17 +3888,17 @@ Figura 4: Checagem da Normalidade dos Resíduos (Q-Q Plot)
 </section>
 <section id="analisando-o-erro-padrão-robusto" class="level1 page-columns page-full" data-number="5">
 <h1 data-number="5"><span class="header-section-number">5</span> Analisando o erro padrão robusto</h1>
-<p>Para corrigir a heterocedasticidade presente nos modelos, utilizaremos os erros padrão robustos. Especificamente, utilizaremos o <span class="math inline">\(HC3\)</span>, dado o tamanho de nossa amostra. O <span class="math inline">\(HC3H\)</span> é apropriado para amostras pequenas porque ele penaliza os <em>outliers</em>, evitando falsos positivos<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>. A fórmula para o estimador <span class="math inline">\(HC3\)</span> é:</p>
-<div class="no-row-height column-margin column-container"><div id="fn2"><p><sup>2</sup> Parte dessa informação foi dada pelo professor Manoel Galdino. De forma complementar, perguntei ao Gemini por quê usar o <span class="math inline">\(HC3\)</span> ao invés do <span class="math inline">\(HC1\)</span> e comparei o resultado dos dois testes nos modelos. No <span class="math inline">\(HC1\)</span>, algumas variáveis (como Índice de Desenvolvimento Humano), continuaram estatisticamente significativas. Com o <span class="math inline">\(HC3\)</span>, nenhuma variável manteve sua significância.</p></div></div><p><span class="math display">\[
+<p>Para corrigir a heterocedasticidade presente nos modelos, utilizaremos os erros padrão robustos. Especificamente, utilizaremos o <span class="math inline">\(HC3\)</span>, dado o tamanho de nossa amostra. O <span class="math inline">\(HC3\)</span> é apropriado para amostras pequenas porque ele penaliza os <em>outliers</em>, evitando falsos positivos<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>. A fórmula para o estimador <span class="math inline">\(HC3\)</span> é:</p>
+<div class="no-row-height column-margin column-container"><div id="fn3"><p><sup>3</sup> Parte dessa informação foi dada pelo professor Manoel Galdino. De forma complementar, perguntei ao Gemini por quê usar o <span class="math inline">\(HC3\)</span> ao invés do <span class="math inline">\(HC1\)</span> e comparei o resultado dos dois testes nos modelos. No <span class="math inline">\(HC1\)</span>, algumas variáveis (como Índice de Desenvolvimento Humano), continuaram estatisticamente significativas. Com o <span class="math inline">\(HC3\)</span>, nenhuma variável manteve sua significância.</p></div></div><p><span class="math display">\[
 \frac{\hat{u}_i^2} {(1- h_{ii})^2}
 \]</span></p>
-<p>Leia-se: o quadrado do resíduo da observação <span class="math inline">\(i\)</span>, dividido pelo quadrado do complemento da alavancagem (<em>leverage</em>) dessa mesma observação.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a></p>
-<div class="no-row-height column-margin column-container"><div id="fn3"><p><sup>3</sup> Pedi ajuda para o Gemini sobre como ler essa fórmula. Basicamente: o HC3 pega o erro que o modelo cometeu (<span class="math inline">\(\hat{u}^2\)</span>) e o “infla” (aumenta) baseado no quanto aquela observação é influente (<span class="math inline">\(h_{ii}\)</span>). Quanto mais próximo o <span class="math inline">\(h\)</span> estiver de 1, menor será o denominador e maior será o resultado total (a penalidade).</p></div></div><p>A <a href="#tbl-acm-hazel-hc3" class="quarto-xref">Tabela 2</a> apresenta o erro robusto para o Modelo 1:</p>
+<p>Leia-se: o quadrado do resíduo da observação <span class="math inline">\(i\)</span>, dividido pelo quadrado do complemento da alavancagem (<em>leverage</em>) dessa mesma observação.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a></p>
+<div class="no-row-height column-margin column-container"><div id="fn4"><p><sup>4</sup> Pedi ajuda para o Gemini sobre como ler essa fórmula. Basicamente: o HC3 pega o erro que o modelo cometeu (<span class="math inline">\(\hat{u}^2\)</span>) e o “infla” (aumenta) baseado no quanto aquela observação é influente (<span class="math inline">\(h_{ii}\)</span>). Quanto mais próximo o <span class="math inline">\(h\)</span> estiver de 1, menor será o denominador e maior será o resultado total (a penalidade).</p></div></div><p>A <a href="#tbl-acm-hazel-hc3" class="quarto-xref">Tabela 4</a> apresenta o erro robusto para o Modelo 1:</p>
 <div class="cell">
 <div id="tbl-acm-hazel-hc3" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-acm-hazel-hc3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Tabela 2: Estimativas do Modelo ACM Hazel com Erros Robustos (HC3)
+Tabela 4: Estimativas do Modelo ACM Hazel com Erros Robustos (HC3)
 </figcaption>
 <div aria-describedby="tbl-acm-hazel-hc3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
@@ -3932,12 +3955,12 @@ Tabela 2: Estimativas do Modelo ACM Hazel com Erros Robustos (HC3)
 </figure>
 </div>
 </div>
-<p>A <a href="#tbl-acm-gv-hc1" class="quarto-xref">Tabela 3</a> apresenta o erro robusto para o Modelo 2:</p>
-<div class="cell">
+<p>A <a href="#tbl-acm-gv-hc1" class="quarto-xref">Tabela 5</a> apresenta o erro robusto<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a> para o Modelo 2:</p>
+<div class="no-row-height column-margin column-container"><div id="fn5"><p><sup>5</sup> Para este caso, utilizamos o <span class="math inline">\(HC1\)</span>, dado que o <span class="math inline">\(HC3\)</span> é incalculável visto que a observação 86, o valor <span class="math inline">\(h_{ii}\)</span> é igual a 1 e o resultado é <code>NaN</code>.</p></div></div><div class="cell">
 <div id="tbl-acm-gv-hc1" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-acm-gv-hc1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Tabela 3: Estimativas do Modelo ACM GV com Erros Robustos (HC1)
+Tabela 5: Estimativas do Modelo ACM GV com Erros Robustos (HC1)
 </figcaption>
 <div aria-describedby="tbl-acm-gv-hc1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
@@ -3994,12 +4017,12 @@ Tabela 3: Estimativas do Modelo ACM GV com Erros Robustos (HC1)
 </figure>
 </div>
 </div>
-<p>A <a href="#tbl-acr-hazel-hc3" class="quarto-xref">Tabela 4</a> apresenta o erro robusto para o Modelo 3:</p>
+<p>A <a href="#tbl-acr-hazel-hc3" class="quarto-xref">Tabela 6</a> apresenta o erro robusto para o Modelo 3:</p>
 <div class="cell">
 <div id="tbl-acr-hazel-hc3" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-acr-hazel-hc3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Tabela 4: Estimativas do Modelo ACR Hazel com Erros Robustos (HC3)
+Tabela 6: Estimativas do Modelo ACR Hazel com Erros Robustos (HC3)
 </figcaption>
 <div aria-describedby="tbl-acr-hazel-hc3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
@@ -4063,12 +4086,12 @@ Tabela 4: Estimativas do Modelo ACR Hazel com Erros Robustos (HC3)
 </figure>
 </div>
 </div>
-<p>A <a href="#tbl-acr-cipriani-hc3" class="quarto-xref">Tabela 5</a> apresenta o erro robusto para o Modelo 4:</p>
+<p>A <a href="#tbl-acr-cipriani-hc3" class="quarto-xref">Tabela 7</a> apresenta o erro robusto para o Modelo 4:</p>
 <div class="cell">
 <div id="tbl-acr-cipriani-hc3" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-acr-cipriani-hc3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Tabela 5: Estimativas do Modelo ACR Cipriani com Erros Robustos (HC3)
+Tabela 7: Estimativas do Modelo ACR Cipriani com Erros Robustos (HC3)
 </figcaption>
 <div aria-describedby="tbl-acr-cipriani-hc3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
@@ -4132,14 +4155,491 @@ Tabela 5: Estimativas do Modelo ACR Cipriani com Erros Robustos (HC3)
 </figure>
 </div>
 </div>
+<p>Analisando as tabelas geradas, após a constatação da violação dos pressupostos de homocedasticidade, aplicamos o estimador <span class="math inline">\(HC3\)</span> para investigar os erros padrão do modelo. As variáveis explicativas do modelo 1, 3 e 4 perderam significância estatística. O IDH, que antes era uma variável que contribuia para explicar o fenômeno da queda das taxas de homicídio, agora não é mais significativo.</p>
+<p>Uma exceção analítica foi necessária para o Modelo 2 (ACM GV), no qual a presença de uma observação com alavancagem perfeita inviabilizou matematicamente o cálculo do estimador <span class="math inline">\(HC3\)</span>. Ao adotar-se o estimador HC1, que aplica uma correção menos conservadora, observou-se que o IDH preservou sua significância estatística (<span class="math inline">\(p = 0,048\)</span>) com um coeficiente de -28,974, enquanto a variável de desemprego de longo prazo apresentou significância marginal (<span class="math inline">\(p = 0,091\)</span>). Esse resultado sugere que o desenvolvimento humano permanece como o preditor mais resiliente da taxa de homicídios, resistindo a correções moderadas de heterocedasticidade, embora sua significância seja suprimida sob os critérios mais estritos do <span class="math inline">\(HC3\)</span>.</p>
 </section>
-<section id="referências" class="level1 unnumbered" data-number="6">
+<section id="avanços-em-relação-ao-trabalho-original" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Avanços em relação ao trabalho original</h1>
+<p>Para avançar na interpretação dos resultados, estimamos os modelos de Regressão Robusta com M-estimador de Huber. Nesse modelo de regressão, é possível mitigar a influência dos valores extremos sem recorrer à exclusão amostral. A <a href="#tbl-reg-rob" class="quarto-xref">Tabela 8</a> apresenta o resultado:</p>
+<div id="tbl-reg-rob" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-reg-rob-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tabela 8: Regressão Robusta (estimador-M de Huber)
+</figcaption>
+<div aria-describedby="tbl-reg-rob-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>acm_hazel_rob <span class="ot">&lt;-</span> <span class="fu">rlm</span>(homi_rate_unodc <span class="sc">~</span> acm_hazel <span class="sc">+</span> idh <span class="sc">+</span> desemprego_longo <span class="sc">+</span> ginmar_solt,</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>                     <span class="at">data =</span> df,</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>                     <span class="at">psi =</span> psi.huber)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>acm_gv_rob <span class="ot">&lt;-</span> <span class="fu">rlm</span>(homi_rate_unodc <span class="sc">~</span> acm_gv <span class="sc">+</span> idh </span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>                        <span class="sc">+</span> desemprego_longo <span class="sc">+</span> ginmar_solt,</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>                       <span class="at">data =</span> df,</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>                      <span class="at">psi =</span> psi.huber)</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>acr_hazel_rob <span class="ot">&lt;-</span> <span class="fu">rlm</span>(homi_rate_unodc <span class="sc">~</span> acr_hazel <span class="sc">+</span> idh </span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>                           <span class="sc">+</span> desemprego_longo <span class="sc">+</span> ginmar_solt,</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>                       <span class="at">data =</span> df,</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>                      <span class="at">psi =</span> psi.huber)</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>acr_cipriani_rob <span class="ot">&lt;-</span> <span class="fu">rlm</span>(homi_rate_unodc <span class="sc">~</span> acr_cipriani <span class="sc">+</span> idh </span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>                              <span class="sc">+</span> desemprego_longo <span class="sc">+</span> ginmar_solt,</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>                       <span class="at">data =</span> df,</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>                      <span class="at">psi =</span> psi.huber)</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a><span class="fu">stargazer</span>(acm_hazel_rob, </span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>          acm_gv_rob, </span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>          acr_hazel_rob, </span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>          acr_cipriani_rob,</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>          <span class="at">header =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>          <span class="at">type =</span> <span class="st">&quot;html&quot;</span>,</span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>          <span class="at">dep.var.labels =</span> <span class="fu">c</span>(<span class="st">&quot;Taxa de Homícidio (100 mil hab.)&quot;</span>),</span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>          <span class="at">covariate.labels =</span> <span class="fu">c</span>(<span class="st">&quot;ACM Hazel&quot;</span>, <span class="st">&quot;ACM GV&quot;</span>, <span class="st">&quot;ACR Hazel&quot;</span>,<span class="st">&quot;ACR Cipriani&quot;</span>, <span class="st">&quot;IDH&quot;</span>, <span class="st">&quot;Desemprego Longo&quot;</span>, <span class="st">&quot;Índice de Gini&quot;</span>)</span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>                     )</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<table style="text-align:center">
+<tbody><tr>
+<td colspan="5" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td colspan="4">
+<em>Dependent variable:</em>
+</td>
+</tr>
+<tr>
+<td>
+</td>
+<td colspan="4" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td colspan="4">
+Taxa de Homícidio (100 mil hab.)
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(1)
+</td>
+<td>
+(2)
+</td>
+<td>
+(3)
+</td>
+<td>
+(4)
+</td>
+</tr>
+<tr>
+<td colspan="5" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+ACM Hazel
+</td>
+<td>
+-0.135
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.096)
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+ACM GV
+</td>
+<td>
+</td>
+<td>
+-0.284
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+(0.390)
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+ACR Hazel
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+-0.051
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+(0.045)
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+ACR Cipriani
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+-0.015
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+(0.029)
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+IDH
+</td>
+<td>
+-9.036<sup>***</sup>
+</td>
+<td>
+-10.482<sup>***</sup>
+</td>
+<td>
+-10.889<sup>***</sup>
+</td>
+<td>
+-10.894<sup>***</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(2.761)
+</td>
+<td>
+(2.295)
+</td>
+<td>
+(2.367)
+</td>
+<td>
+(2.356)
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Desemprego Longo
+</td>
+<td>
+-0.013
+</td>
+<td>
+-0.023<sup>**</sup>
+</td>
+<td>
+-0.022<sup>**</sup>
+</td>
+<td>
+-0.023<sup>**</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.014)
+</td>
+<td>
+(0.010)
+</td>
+<td>
+(0.011)
+</td>
+<td>
+(0.010)
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Índice de Gini
+</td>
+<td>
+0.010
+</td>
+<td>
+-0.003
+</td>
+<td>
+0.0003
+</td>
+<td>
+0.001
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.026)
+</td>
+<td>
+(0.022)
+</td>
+<td>
+(0.023)
+</td>
+<td>
+(0.022)
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Constant
+</td>
+<td>
+11.456<sup>***</sup>
+</td>
+<td>
+16.068<sup>**</sup>
+</td>
+<td>
+11.783<sup>***</sup>
+</td>
+<td>
+11.321<sup>***</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(3.069)
+</td>
+<td>
+(7.364)
+</td>
+<td>
+(2.433)
+</td>
+<td>
+(2.420)
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td colspan="5" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Observations
+</td>
+<td>
+29
+</td>
+<td>
+37
+</td>
+<td>
+37
+</td>
+<td>
+37
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Residual Std. Error
+</td>
+<td>
+0.533 (df = 24)
+</td>
+<td>
+0.594 (df = 32)
+</td>
+<td>
+0.643 (df = 32)
+</td>
+<td>
+0.635 (df = 32)
+</td>
+</tr>
+<tr>
+<td colspan="5" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+<em>Note:</em>
+</td>
+<td colspan="4" style="text-align:right">
+<sup><em></em></sup><em>p&lt;0.1; <sup><strong></strong></sup><strong>p&lt;0.05; <sup></sup></strong></em>p&lt;0.01
+</td>
+</tr>
+</tbody></table>
+</div>
+</figure>
+</div>
+<p>Sob a estimação robusta, o IDH volta a apresentar significância estatística (<span class="math inline">\(p &lt; 0.01\)</span>) em todas as quatro especificações, apresentando coeficientes elevados (variando entre -9,036 e -10,894). Adicionalmente, a Regressão Robusta identificou uma associação negativa e significativa para o desemprego de longa duração nos Modelos 2, 3 e 4.</p>
+<p>Entretanto, o resultado é consitenta para as variaveis independentes principais. Em todas as estratégias de estimação que utilizamos até aqui - OLS, erros padrão robusto (HC) e Regressão Robusta (RLM) - as medidas de alteração na maioridade ou responsabilidade penal não apresentam significância estatística em nenhum dos cenários estimados. Concluímos, então que, controlando-se pelas condições socioeconômicas estruturais, as variações nos marcos legais de imputabilidade penal não exercem impacto perceptível sobre a taxa de homicídios no contexto analisado.</p>
+</section>
+<section id="referências" class="level1 unnumbered" data-number="7">
 
 
 </section>
 
 
-<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">6 Referências</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">7 Referências</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
 <div id="ref-lins2016" class="csl-entry" role="listitem">
 Lins, Rodrigo, Dalson Figueiredo Filho, e Lucas Silva. 2016. <span>«A Redução Da Maioridade Penal Diminui a Violência? <span>Evidências</span> de Um Estudo Comparado»</span>. <em>Opinião Pública</em> 22 (1): 118–39. <a href="https://doi.org/10.1590/1807-0191201622118">https://doi.org/10.1590/1807-0191201622118</a>.
 </div>
