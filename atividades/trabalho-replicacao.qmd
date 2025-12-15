@@ -3,7 +3,7 @@ title: "Replicação: A redução da maioridade penal diminui a violência? Evid
 format: 
   html: 
     toc: true
-    toc-depth: 2
+    toc-depth: 3
     toc-location: left
     toc-title: "Sumário"
     reference-location: margin
@@ -119,14 +119,18 @@ modelo_acr_cipriani <- lm(homi_rate_unodc ~ acr_cipriani + idh + desemprego_long
 Apresentando os modelos:
 
 ```{r}
+#| results: asis
 stargazer::stargazer(modelo_acm_hazel, modelo_acm_gv, modelo_acr_hazel, modelo_acr_cipriani,
-                     type = "text",
+                     type = "html",
                      title = "Resultados das Regressões",
                      dep.var.labels = c("Taxa de Homícidio (100 mil hab.)"),
-                     covariate.labels = c("ACM Hazel", "ACM GV", "ACR Hazel","ACR Cipriani", "IDH", "Desemprego Longo", "Índice de Gini"))
+                     covariate.labels = c("ACM Hazel", "ACM GV", "ACR Hazel","ACR Cipriani", "IDH", "Desemprego Longo", "Índice de Gini")
+                     )
 ```
 
 # Interpretação dos coeficientes da regressão {#sec-interpretacao}
+
+Mantendo todas as variáveis constantes iguais à zero (teoricamente), os modelos (valor de $\alpha$)indicariam uma taxa de 19.74 (Modelo 1), 33.80 (Modelo 2), 32.40 (Modelo 3) e 30.52 (Modelo 4) homicídios para cada grupo de 100 mil habitantes. 
 
 Os coeficientes negativos da Redução da Maioridade Penal (ACM) ou Responsabilização Criminal (ACR) indicam que quanto maior a idade penal, menor a taxa de homicídios. Dessa forma, rejeitamos a $H_1$ que $\text{menor maioridade = menor violência}$. Os modelos 2 (`acm_gv`) e 4 (`acr_cipriani`) não apresentam significância estatística, ao passo que os modelos 1 (`acm_hazel`) e 3 (`acr_hazel`) apresentam significância a um nível de 10% ($p < 0.1$). É um nível de significância fraco. A partir desses dados, não é possível afirmar que a redução da maioridade penal ou responsabilidade criminal diminui as taxas de homícidio. 
 
@@ -140,11 +144,127 @@ Por fim, o Índice de Gini não apresentou nenhum valor significativo, sugerindo
 
 Nesta seção, avaliamos se os modelos atendem aos pressupostos da regressão linear: 
 
-1. Colinearidade
+1. Linearidade
+1. Colinearidade (VIF)
 1. Homocedasticidade
 1. Normalidade dos resíduos 
 
-## Colinearidade
+Como vamos repetir a mesma função para plotagem de modelo usando `base::plot`, criei uma função para que todos os modelos tenham o mesmo padrão:
+
+```{r}
+plotar_modelo <- function(..., which = 1) {
+  # 1. Modelos a serem plotados
+  lista_modelos <- list(...)
+  
+  # 2. Loop para plotar modelos com as configurações limpas
+  for (modelo in lista_modelos){
+    plot(modelo,
+         which = which,
+         main = "",
+         caption = "",
+         sub.caption = "")
+  }
+}
+```
+
+
+## Linearidade dos Resíduos
+
+O pressuposto da linearidade avalia se a realação entre os preditores e a variável resposta é, em média, linear. Supõe-se que $\mathbb{E}[\epsilon | X] = 0$ (a média condicional dos erros é zero, logo, o preditor e o erro não estão correlacionados).
+
+
+```{r}
+#| label: fig-linearidade
+#| echo: false
+#| layout-ncol: 2
+#| fig-cap: "Checagem da Linearidade (Resíduos X Valores Previstos)"
+#| fig-subcap:
+#|   - "Modelo 1: ACM Hazel"
+#|   - "Modelo 2: ACM GV"
+#|   - "Modelo 3: ACR Hazel"
+#|   - "Modelo 4: ACR Cipriani"
+
+
+# 1. Plota apenas o gráfico de linearidade
+
+plotar_modelo(
+  modelo_acm_hazel,
+  modelo_acm_gv,
+  modelo_acr_hazel,
+  modelo_acr_cipriani,
+  which = 1
+)
+```
+
+Conforme a @fig-linearidade, era esperado que a linha vermelha tivesse um comportamento reto horinzontalmente, ou seja, com a média condicional dos erros iguais a zero. Todos os casos sugerem que não há relação linear entre a variável resposta e os preditores. Ademais, a presença de valores *outliers* é preocupante. 
+
+### É possível ajustar a linearidade do modelo?
+
+A não-linearidade prejudica a confiança na interpretação dos estimadores ($\beta$) do modelo. A não-linearidade, no nosso caso, pode se dar devido ao tamanho da amostra e a presença de *outliers*, constatada anteriormente. Para tentar solucionar este problema, aplicaremos o logaritmo natural na variável dependente^[Aplicando o log na taxa de homicídio, assumimos que as variáveis explicativas tem um efeito multiplicativo e não aditivo sobre o crime.]. 
+
+```{r}
+#| results: asis
+# Modelo com variável transformada
+
+df$log_homicidio <- log(df$homi_rate_unodc)
+
+acm_hazel_log <- lm(log_homicidio ~ acm_hazel + idh 
+                           + desemprego_longo + ginmar_solt,
+                       data = df)
+
+acm_gv_log <- lm(log_homicidio ~ acm_gv + idh 
+                        + desemprego_longo + ginmar_solt,
+                       data = df)
+
+acr_hazel_log <- lm(log_homicidio ~ acr_hazel + idh 
+                           + desemprego_longo + ginmar_solt,
+                       data = df)
+
+acr_cipriani_log <- lm(log_homicidio ~ acr_cipriani + idh 
+                              + desemprego_longo + ginmar_solt,
+                       data = df)
+
+stargazer(acm_hazel_log, 
+          acm_gv_log, 
+          acr_hazel_log, 
+          acr_cipriani_log,
+          type = "html",
+          title = "Resultados das Regressões com Log Natural",
+          dep.var.labels = c("Log Natural da Taxa de Homícidio (100 mil hab.)"),
+          covariate.labels = c("ACM Hazel", "ACM GV", "ACR Hazel","ACR Cipriani", "IDH", "Desemprego Longo", "Índice de Gini")
+                     )
+
+```
+
+Em termos de interpretação, o modelo ...
+
+Agora, com o modelo ajustado, é possível perceber que, diferente da @fig-linearidade, a @fig-linearidade-log apresenta os valores muito mais próximo da reta. Ou seja, a média condicional dos erros está mais próxima de zero ao transformar a variável dependente em seu logaritimo natural.
+
+```{r}
+#| label: fig-linearidade-log
+#| echo: false
+#| layout-ncol: 2
+#| fig-cap: "Checagem da Linearidade (Resíduos X Valores Previstos)\ncom Log Natural"
+#| fig-subcap:
+#|   - "Modelo 1: ACM Hazel"
+#|   - "Modelo 2: ACM GV"
+#|   - "Modelo 3: ACR Hazel"
+#|   - "Modelo 4: ACR Cipriani"
+
+
+# 1. Plota apenas o gráfico de linearidade
+
+plotar_modelo(
+  acm_hazel_log,
+  acm_gv_log,
+  acr_hazel_log,
+  acr_cipriani_log,
+  which = 1
+)
+```
+
+
+## Colinearidade (VIF) no Modelo
 
 A @tbl-vif sintetiza os valores de Variation Inflaction Factor, indicando que as variáveis são independentes entre si. Ou seja, elas contribuem de maneira distinta para o modelo. Os valores encontram-se significativamente abaixo do limite crítico de 5. Logo, desconsideramos a colinearidade suspeitada na @sec-interpretacao. 
 
@@ -204,10 +324,13 @@ A homocedasticidade pressupõe que os resíduos variem de forma constante ao lon
 
 # 1. Plota apenas o gráfico de heterocedasticidade
 
-plot(modelo_acm_hazel,    which = 3)
-plot(modelo_acm_gv,       which = 3)
-plot(modelo_acr_hazel,    which = 3)
-plot(modelo_acr_cipriani, which = 3)
+plotar_modelo(
+  modelo_acm_hazel,
+  modelo_acm_gv,
+  modelo_acr_hazel,
+  modelo_acr_cipriani,
+  which = 3
+)
 
 ```
 
@@ -230,19 +353,22 @@ O teste de normalidade dos resíduos, apresentado na @fig-normalidade, verifica 
 
 # 1. Plota apenas o gráfico de normalidade
 
-plot(modelo_acm_hazel,    which = 2)
-plot(modelo_acm_gv,       which = 2)
-plot(modelo_acr_hazel,    which = 2)
-plot(modelo_acr_cipriani, which = 2)
+plotar_modelo(
+  modelo_acm_hazel,
+  modelo_acm_gv,
+  modelo_acr_hazel,
+  modelo_acr_cipriani,
+  which = 2
+)
 
 ```
 
-Isso se dá, provavelmente, pelo caráter da amostra. É mais provável que poucos países concentrem taxas de homicídios mais altas, enquanto a maior parte dos países da amostra de @lins2016 tem taxas baixas ou médias. Como o $n$ ($n <40$) amostral é relativamente pequeno, os poucos casos *outliers* distorcem a normalidade dos resíduos. 
+Isso se dá, provavelmente, pelo caráter da amostra. É mais provável que poucos países concentrem taxas de homicídios mais altas, enquanto a maior parte dos países da amostra de @lins2016 tem taxas baixas ou médias. Como o $n$ amostral é relativamente pequeno ($n <40$, para cada país), os poucos casos *outliers* distorcem a normalidade dos resíduos. 
 
 
 # Analisando o erro padrão robusto
 
-Para corrigir a heterocedasticidade presente nos modelos, utilizaremos os erros padrão robustos. Especificamente, utilizaremos o $HC3$, dado o tamanho de nossa amostra. O $HC3H$ é apropriado para amostras pequenas porque ele penaliza os *outliers*, evitando falsos positivos^[Parte dessa informação foi dada pelo professor Manoel Galdino. De forma complementar, perguntei ao Gemini por quê usar o $HC3$ ao invés do $HC1$ e comparei o resultado dos dois testes nos modelos. No $HC1$, algumas variáveis (como Índice de Desenvolvimento Humano), continuaram estatisticamente significativas. Com o $HC3$, nenhuma variável manteve sua significância.] A fórmula para o estimador $HC3$ é:
+Para corrigir a heterocedasticidade presente nos modelos, utilizaremos os erros padrão robustos. Especificamente, utilizaremos o $HC3$, dado o tamanho de nossa amostra. O $HC3H$ é apropriado para amostras pequenas porque ele penaliza os *outliers*, evitando falsos positivos^[Parte dessa informação foi dada pelo professor Manoel Galdino. De forma complementar, perguntei ao Gemini por quê usar o $HC3$ ao invés do $HC1$ e comparei o resultado dos dois testes nos modelos. No $HC1$, algumas variáveis (como Índice de Desenvolvimento Humano), continuaram estatisticamente significativas. Com o $HC3$, nenhuma variável manteve sua significância.]. A fórmula para o estimador $HC3$ é:
 
 $$
 \frac{\hat{u}_i^2} {(1- h_{ii})^2}
